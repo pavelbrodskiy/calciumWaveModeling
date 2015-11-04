@@ -50,10 +50,8 @@ p.K_Ca      = 3e-1;
 % Postulated PLC kinetics
 p.PLC = @(Ca2) p.V_CaInd + p.V_Ca.*Ca2./(p.K_Ca.^2+Ca2);
 
-% Stochastic pulse parameters
-p.pulseTimeConstant = 30;    % [s]       Average time between pulses
-p.IP3Pulse          = 5;    % [uM]      Concentration of IP3 in affected coordinates
-p.IP3Extent         = 1;    % [um]      Extent of IP3 pulse
+% Stochastic parameters
+p.pulseTimeConstant = 1;    % [s]   
 
 % Initial conditions
 p.Ca_cyto_0         = 0;	% [uM]      Initial concentration of Ca2+ in cytoplasm
