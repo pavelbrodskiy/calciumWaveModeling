@@ -76,7 +76,7 @@ if any(p.outputModes==4)
 end
 
 timeUntilPulse = 0;
-lambda = p.pulseTimeConstant / p.dt;
+lambda = (p.pulseTimeConstant / p.dt);
 
 IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 
@@ -87,7 +87,7 @@ Deff_IP3 = 1./(1./p.D_IP3 + 1./(p.P_IP3 .* p.cellSize));
 
 if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
     if dimensions == 1
-        CaC_plot = zeros(xSize, ySize, totalFrames);
+        CaC_plot = zeros(ySize, totalFrames);
     elseif dimensions == 2
         CaC_plot = zeros(xSize, ySize, p.outFrames);
     else
@@ -107,7 +107,7 @@ for t = 0:p.dt:p.totalTime
     if timeUntilPulse <= 0
         [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
         IP3(xPulse, yPulse) = IP3(xPulse, yPulse) + p.IP3Pulse;
-        timeUntilPulse = poissrnd(lambda / p.dt);
+        timeUntilPulse = poissrnd(lambda);
         disp('Pulse Occured');
     end    
     
@@ -180,7 +180,7 @@ for t = 0:p.dt:p.totalTime
     frame = frame + 1;
     if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
         if dimensions == 1
-            CaC_plot(:,:,frame) = CaC;
+            CaC_plot(:,frame) = CaC;
         end
     end
 end
