@@ -122,11 +122,11 @@ for t = 0:p.dt:p.totalTime
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
     if dimensions == 1
-        dif_Ca	= Deff_Ca .* del2Center1D(CaC, p.dx);
-        dif_IP3	= Deff_IP3 .* del2Center1D(IP3, p.dx);
+        dif_Ca	= Deff_Ca .* del2Periodic1D(CaC, p.dx);
+        dif_IP3	= Deff_IP3 .* del2Periodic1D(IP3, p.dx);
     elseif dimensions == 2
-        dif_Ca	= Deff_Ca .* del2Center2D(CaC, p.dx);
-        dif_IP3	= Deff_IP3 .* del2Center2D(IP3, p.dx);
+        dif_Ca	= Deff_Ca .* del2Periodic2D(CaC, p.dx);
+        dif_IP3	= Deff_IP3 .* del2Periodic2D(IP3, p.dx);
     end
     
     % Solve for partial from rates and laplacian
@@ -145,7 +145,7 @@ for t = 0:p.dt:p.totalTime
         disp([num2str(100*t/p.totalTime) '% done with simulation']);
         if any(p.outputModes==3) % Check if realtime output is requested
             if dimensions == 1
-                plotOneConcentration( xs, CaC, domainSizey );
+                plotOneConcentration( xs, CaC, domainSizey, p );
                 drawnow
             elseif dimensions == 2
                 imshow(CaC, p.CaBound);

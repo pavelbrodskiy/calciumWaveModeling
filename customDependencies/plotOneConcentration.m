@@ -1,7 +1,7 @@
-function plotOneConcentration( xs, CaC, domainSize )
+function plotOneConcentration( xs, CaC, domainSize, p )
 
-plot(xs,CaC);%,xs,P);
-axis([0,domainSize,0,0.3])
+plot(xs,CaC);
+axis([[0,domainSize], p.CaBound])
 title('Cyto Ca2+')
 
 end

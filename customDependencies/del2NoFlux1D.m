@@ -1,4 +1,4 @@
-function [ A ] = del2Center1D( A, dx )
+function [ A ] = del2NoFlux1D( A, dx )
 
     left = [A(2:end) A(end)];
     right = [A(1) A(1:(end-1))];
