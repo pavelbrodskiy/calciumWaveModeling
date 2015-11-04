@@ -6,7 +6,7 @@ concentration = imresize(concentration,[1000,1000]);
 concentration = concentration - min(concentration(:));
 concentration = concentration ./ max(concentration(:));
 concentration = concentration * 256;
-imwrite(grs2rgb(concentration,jet(256)) , [t ' image.png']);
+imwrite(grs2rgb(flipud(concentration), jet(256)) , [t ' image.png']);
 
 end
 
