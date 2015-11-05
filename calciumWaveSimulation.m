@@ -75,8 +75,8 @@ if any(p.outputModes==4)
     open(aviobj);
 end
 
-timeUntilPulse = 0;
 lambda = (p.pulseTimeConstant / p.dt);
+timeUntilPulse = poissrnd(lambda);
 
 IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 
@@ -104,7 +104,7 @@ for t = 0:p.dt:p.totalTime
     timeUntilPulse = timeUntilPulse - 1;
     
     % Implement random flashes
-    if timeUntilPulse <= 0
+    if ~timeUntilPulse
         [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
         IP3(xPulse, yPulse) = IP3(xPulse, yPulse) + p.IP3Pulse;
         timeUntilPulse = poissrnd(lambda);
@@ -118,20 +118,17 @@ for t = 0:p.dt:p.totalTime
         return 
     end
     
-    % Introduce random noise
-    % noiseTerm = normrnd(1,p.noiseSigma * p.dt, [xSize, ySize]);
-     
     % Calculate squares for speed
     C2          = CaC .^ 2;
-    I2          = IP3 .^ 2;
+    %I2          = IP3 .^ 2;
     
     % Calculate rates
-    v_PLC       =  p.PLC(C2);
-    v_rel       = (p.k_1 + p.k_2 .* IP3R .* C2 .* I2 ./ (p.K_a.^2 + C2)./(p.K_IP3.^2 + I2)) .* (CaER - CaC);
-    v_SERCA     =  p.k_3 .* CaC;
+    v_PLC       =  p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]);
+    v_rel       = (p.k_flux .* IP3R .* (IP3.^p.n ./ (p.k_mu.^p.n + IP3.^p.n)) .* (p.b + ((1 - p.b) .* CaC) ./ (p.k_1 + CaC))); % .* (CaER - CaC);
+    v_SERCA     = (p.gamma .* C2) ./ (p.k_gamma + C2);
     v_out       =  p.k_5 .* CaC;
-    v_deg       =  p.k_9 .* IP3;
-    v_in        =  p.v_40 + p.v_41 .* I2 ./ (p.K_r.^2 + I2);
+    v_deg       = (p.k_P .* p.V_P .* IP3) ./ (p.k_P + IP3);
+    v_in        =  p.v_40;
     dIP3Rdt     =  p.k_6 .* (p.K_i.^2 ./ (p.K_i.^2 + C2) - IP3R);
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
@@ -145,21 +142,25 @@ for t = 0:p.dt:p.totalTime
     
     % Solve for partial from rates and laplacian
     dCaCdt      = v_rel - v_SERCA + v_in - v_out + dif_Ca;
-    dCaERdt     = p.beta .* (v_SERCA - v_rel);
+    %dCaERdt     = p.beta .* (v_SERCA - v_rel);
     dIP3dt      = v_PLC - v_deg + dif_IP3;
     
     % Update concentrations with forward euler method
     CaC         = CaC  + dCaCdt  * p.dt;
-    CaER        = CaER + dCaERdt * p.dt;
+    %CaER        = CaER + dCaERdt * p.dt;
     IP3         = IP3  + dIP3dt  * p.dt;
     IP3R        = IP3R + dIP3Rdt * p.dt;
+    
+    IP3 (IP3 < 0) = 0;
     
     % Output the frame realtime
     if mod(frame, framesPerOutput) == 0
         disp([num2str(100*t/p.totalTime) '% done with simulation']);
         if any(p.outputModes==3) % Check if realtime output is requested
             if dimensions == 1
-                plotOneConcentration( xs, CaC, domainSizey, p );
+                %plotOneConcentration( xs, CaC, domainSizey, p );
+                plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSizey )
+                min(IP3)
                 drawnow
             elseif dimensions == 2
                 imshow(CaC, p.CaBound);

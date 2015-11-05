@@ -12,13 +12,30 @@ function [ p ] = defaultParameters()
 MM_Ca       = 40.078;       % [g/mol]   Molar mass of Calcium atom (± 0.004 u)
 MM_IP3      = 420.096;   	% [g/mol]   Molar mass of IP3 molecule
 
-%% Sources for parameter values
-% Hofer model paper:
+%% Cody's paper parameters
+p.n         = 1;            % [   ]
+p.k_flux    = .5;         % [uM]      3 uM/sec affects intensity of Ca2+ flash %TUNED
+p.k_mu      = 0.01;         % [uM]
+p.b         = 0.11;         % [   ]
+p.k_1       = 0.70;         % [uM]
+p.gamma     = 1.10;         % [uM/s]
+p.k_gamma 	= 0.27;         % [uM]
+p.V_P       = 0.08;         % [1/s]     %TUNED
+p.k_P       = 0.5*1.00;     % [uM]
 
+%% Assumed parameters
+p.v_PLC     = 8e-2;
+p.sigma     = 1;         % [   ]     Standard deviation of production of IP3
 
+% Postulated PLC kinetics
+p.PLC = @(Ca2) p.V_CaInd + p.V_Ca.*Ca2./(p.K_Ca.^2+Ca2);
 
+% Stochastic pulse parameters
+p.pulseTimeConstant = inf;	% [s]       Average time between pulses
+p.IP3Pulse          = 5;    % [uM]      Concentration of IP3 in affected coordinates
+p.IP3Extent         = 1;    % [um]      Extent of IP3 pulse
 
-%% Wave simulation parameters
+%% Wave simulation parameters from Hofer paper
 % Kinetic parameters
 p.k_1       = 0.0004;       % [1/s]     Rate constant of calcium leak from ER
 p.k_2       = 0.08;         % [1/s]     Rate constant of calcium release through IP3
@@ -41,25 +58,17 @@ p.D_Ca      = 20;           % [uM/s^2]	Diffusion coefficient of calcium
 p.P_IP3     = 1;            % [uM/s]    Gap-junctional permeability of IP3
 p.P_Ca      = 0.01*p.P_IP3;	% [uM/s]    Effective gap-junctional permeability of calcium
 
-p.beta      = 20;           % [no unit]	Ratio of the effective volumes for calcium of cytoplasm and ER
+p.beta      = 20;           % [   ]     Ratio of the effective volumes for calcium of cytoplasm and ER
 
 p.V_CaInd   = 1e-2;
 p.V_Ca      = 8e-2;
 p.K_Ca      = 3e-1;
 
-% Postulated PLC kinetics
-p.PLC = @(Ca2) p.V_CaInd + p.V_Ca.*Ca2./(p.K_Ca.^2+Ca2);
-
-% Stochastic pulse parameters
-p.pulseTimeConstant = 30;    % [s]       Average time between pulses
-p.IP3Pulse          = 5;    % [uM]      Concentration of IP3 in affected coordinates
-p.IP3Extent         = 1;    % [um]      Extent of IP3 pulse
-
 % Initial conditions
-p.Ca_cyto_0         = 0;	% [uM]      Initial concentration of Ca2+ in cytoplasm
-p.Ca_ER_0           = 80;	% [uM]      Initial concentration of Ca2+ in ER
-p.IP3_0             = 0;	% [uM]      Initial concentration of IP3
-p.IP3R_0            = 1;	% [uM]      Initial active concentration of IP3R
+p.Ca_cyto_0	= 0;            % [uM]      Initial concentration of Ca2+ in cytoplasm
+p.Ca_ER_0	= 80;           % [uM]      Initial concentration of Ca2+ in ER
+p.IP3_0     = 0;            % [uM]      Initial concentration of IP3
+p.IP3R_0	= 1;            % [uM]      Initial active concentration of IP3R
 
 end
 

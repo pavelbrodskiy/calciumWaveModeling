@@ -1,4 +1,4 @@
-function [ output_args ] = processVideo( varargin )
+function [ analysisObj ] = processVideo( varargin )
 
 filename = 'WingDisc2 P compartment.tif';
 
@@ -19,10 +19,12 @@ for i = 1:numFrames
     subtractedVideo(:,:,i) = video(:,:,i) - min(video,[],3);
     signal = video(:,:,i);
     %cleanedSignal = subtractedVideo(:,:,i);
-    meanIntensity(i) = mean(signal(:));
+    analysisObj.meanIntensity(i) = mean(signal(:));
     %cleanedIntensity(i) = mean(cleanedSignal(:));
-    stdevIntensity(i) = std(signal(:));
+    analysisObj.stdevIntensity(i) = std(signal(:));
 end
+
+
 
 end
 
