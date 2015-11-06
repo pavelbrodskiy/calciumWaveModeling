@@ -124,7 +124,8 @@ for t = 0:p.dt:p.totalTime
     
     % Calculate rates
     v_PLC       =  p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]);
-    v_rel       = (p.k_flux .* IP3R .* (IP3.^p.n ./ (p.k_mu.^p.n + IP3.^p.n)) .* (p.b + ((1 - p.b) .* CaC) ./ (p.k_1 + CaC))); % .* (CaER - CaC);
+    %v_rel      = (p.k_flux .* IP3R .* (IP3.^p.n ./ (p.k_mu.^p.n + IP3.^p.n)) .* (p.b + ((1 - p.b) .* CaC) ./ (p.k_1 + CaC))); % .* (CaER - CaC);
+    v_rel       =  p.v1 .* IP3R .* CaC .* IP3 ./ (p.k1 + IP3);
     v_SERCA     = (p.gamma .* C2) ./ (p.k_gamma + C2);
     v_out       =  p.k_5 .* CaC;
     v_deg       = (p.k_P .* p.V_P .* IP3) ./ (p.k_P + IP3);

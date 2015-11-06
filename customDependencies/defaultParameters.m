@@ -14,7 +14,7 @@ MM_IP3      = 420.096;   	% [g/mol]   Molar mass of IP3 molecule
 
 %% Cody's paper parameters
 p.n         = 1;            % [   ]
-p.k_flux    = .5;         % [uM]      3 uM/sec affects intensity of Ca2+ flash %TUNED
+p.k_flux    = .5;           % [uM]      3 uM/sec affects intensity of Ca2+ flash %TUNED
 p.k_mu      = 0.01;         % [uM]
 p.b         = 0.11;         % [   ]
 p.k_1       = 0.70;         % [uM]
@@ -24,8 +24,12 @@ p.V_P       = 0.08;         % [1/s]     %TUNED
 p.k_P       = 0.5*1.00;     % [uM]
 
 %% Assumed parameters
-p.v_PLC     = 8e-2;
+p.v_PLC     = 8e-5;
 p.sigma     = 1;         % [   ]     Standard deviation of production of IP3
+
+% Emperical IP3R Fit
+p.v1        = 1.02;
+p.k1        = 0.01;
 
 % Postulated PLC kinetics
 p.PLC = @(Ca2) p.V_CaInd + p.V_Ca.*Ca2./(p.K_Ca.^2+Ca2);
