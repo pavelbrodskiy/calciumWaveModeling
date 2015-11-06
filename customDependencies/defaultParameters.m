@@ -25,7 +25,7 @@ p.k_P       = 0.5*1.00;     % [uM]
 
 %% Assumed parameters
 p.v_PLC     = 8e-5;
-p.sigma     = 1;         % [   ]     Standard deviation of production of IP3
+p.sigma     = 1e3;         % [   ]     Standard deviation of production of IP3
 
 % Emperical IP3R Fit
 p.v1        = 1.02;
