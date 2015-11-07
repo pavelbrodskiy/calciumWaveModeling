@@ -1,20 +1,20 @@
-function plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSize )
+function plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSize, p )
 
-        subplot(1,4,1)
+        subplot(2,2,1)
         plot(xs,CaC);%,xs,P);
-        axis([0,domainSize,0,1])
+        axis([[0,domainSize] p.CaBound])
         title('Cyto Ca2+')
-        subplot(1,4,2)
+        subplot(2,2,2)
         plot(xs,CaER);%,xs,C);
-        axis([0,domainSize,0,60])
+        axis([[0,domainSize] p.CaERBound])
         title('ER Ca2+')
-        subplot(1,4,3)
+        subplot(2,2,3)
         plot(xs,IP3);%,xs,C);
-        axis([0,domainSize,0,0.05])
+        axis([[0,domainSize] p.IP3Bound])
         title('IP3')
-        subplot(1,4,4)
+        subplot(2,2,4)
         plot(xs,IP3R);%,xs,C);
-        axis([0,domainSize,0,1])
+        axis([[0,domainSize] p.IP3RBound])
         title('Active IP3R')
 
 
