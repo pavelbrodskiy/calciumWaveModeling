@@ -89,7 +89,7 @@ if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
 end
 
 % Initialize random pulse variables
-timeUntilPulse = exprnd(p.pulseTimeConstant(0));
+timeUntilPulse = exprnd(p.pulseTimeCon(0));
 IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 
 %% HOMOGENIZE DIFFUSIVITY
@@ -109,9 +109,6 @@ theta = p.v_PLC ./ p.gammaShape;
     
 for t = 0:p.dt:p.totalTime
     
-    %randomNumbers = ((p.noiseMemory).*randomNumbers + (1-p.noiseMemory).*exprnd(1, [xSize, ySize]));
-    v_PLC = gamrnd(p.gammaShape,theta, [xSize, ySize]);
-    
     % Implement random flashes
     if timeUntilPulse <= 0
         [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
@@ -122,8 +119,7 @@ for t = 0:p.dt:p.totalTime
         timeUntilPulse = timeUntilPulse - p.dt;
     end
     
-    IP3(IP3 > p.maxIP3) = p.maxIP3;
-    
+    % Bookeeping
     outputFlag = evaluateFlags( CaC, CaER, IP3, IP3R, p.maxIP3 ) > 0;
     if outputFlag > 0 
         return 
@@ -134,15 +130,12 @@ for t = 0:p.dt:p.totalTime
     I2          = IP3 .^ 2;
     
     % Calculate rates
-    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_a.^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
-    %v_PLC  = p.v_PLC .* randomNumbers;
+    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_Ca.^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
     v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
     v_deg   = p.k_9.*IP3;
-    %v_media    = p.v_40 - (p.k_5 .* CaC);
     v_media    =  p.P_Ca_media .* (p.Ca_media - CaC);
     dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
-    
-    v_PLC (v_PLC < 0) = 0;
+    v_PLC = gamrnd(p.gammaShape,theta, [xSize, ySize]);
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
     switch p.boundCondition
@@ -167,9 +160,6 @@ for t = 0:p.dt:p.totalTime
     end
     
     % Solve for partial from rates and laplacian
-%     dCaCdt      = v_rel - v_SERCA + dif_Ca;
-%     dCaERdt     = p.beta .* (v_SERCA - v_rel);
-%     dIP3dt      = v_PLC - v_deg + dif_IP3;
     dCaCdt  = v_rel - v_SERCA + v_media + dif_Ca;
     dCaERdt = p.beta .* (v_SERCA - v_rel);
     dIP3dt  = v_PLC - v_deg + dif_IP3;
@@ -179,8 +169,6 @@ for t = 0:p.dt:p.totalTime
     CaER        = CaER + dCaERdt * p.dt;
     IP3         = IP3  + dIP3dt  * p.dt;
     IP3R        = IP3R + dIP3Rdt * p.dt;
-    
-    IP3 (IP3 < 0) = 0;
     
     % Output the frame realtime
     if mod(frame, framesPerOutput) == 0
@@ -205,7 +193,7 @@ for t = 0:p.dt:p.totalTime
         end
     end
     
-    % Record concentration of Calcium
+    % Record concentration of calcium
     frame = frame + 1;
     if t>=outputTime&&(any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4))
         if dimensions == 1
