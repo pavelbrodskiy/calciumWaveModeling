@@ -29,20 +29,12 @@ tic
 close all
 
 %% PARAMETER DECLARATION
-p1 = defaultParameters();
+p1 = defaultParameters(1);
 p2 = defaultSettings();
 
 p = catstruct(p1, p2);
 
 %% INPUT PARSING
-
-[ outputFlag, fileName, p ] = arginParser( p, varargin );
-
-%% INITIALIZATION
-
-% In future version:
-% Solve for steady state, convert to modeling units if needed (uM, um, s,
-% 1e-18 moles), calculate squares of constants, initialize variables
 
 % Initialize simulation description variables
 domainSizey         = p.cellNumber * p.cellSize;
@@ -56,6 +48,16 @@ else
     xSize           = 1;
     dimensions      = 1;
 end
+
+[ outputFlag, fileName, p ] = arginParser( p, [xSize, ySize], varargin );
+
+%% INITIALIZATION
+
+% In future version:
+% Solve for steady state, convert to modeling units if needed (uM, um, s,
+% 1e-18 moles), calculate squares of constants, initialize variables
+
+
 totalFrames         = uint32((p.totalTime / p.dt));
 framesPerOutput     = uint32(totalFrames / p.outFrames);
 frame               = 0;
@@ -68,7 +70,7 @@ IP3                 = ones(xSize, ySize) * p.IP3_0;
 IP3R                = ones(xSize, ySize) * p.IP3R_0;
 
 % Initialize output variables
-summaryStatistics   = NaN;
+summaryStatistics.blankField = NaN;
 if any(p.outputModes==4)
     aviobj = VideoWriter(['video ' fileName '.avi']);
     open(aviobj);
@@ -76,7 +78,7 @@ end
 
 if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
     if dimensions == 1
-        CaC_plot = zeros(ySize, p.kymDim(2));
+        CaC_plot = zeros(ySize, p.kymDim);
     elseif dimensions == 2
         CaC_plot2D = zeros(xSize, ySize, p.outFrames);
     else
@@ -87,7 +89,7 @@ if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
 end
 
 % Initialize random pulse variables
-timeUntilPulse = poissrnd((p.pulseTimeConstant(0) / p.dt));
+timeUntilPulse = exprnd(p.pulseTimeConstant(0));
 IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 
 %% HOMOGENIZE DIFFUSIVITY
@@ -95,27 +97,31 @@ IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 Deff_Ca = 1./(1./p.D_Ca + 1./(p.P_Ca .* p.cellSize));
 Deff_IP3 = 1./(1./p.D_IP3 + 1./(p.P_IP3 .* p.cellSize));
 
-randomNumbers = zeros(xSize, ySize);
+%randomNumbers = zeros(xSize, ySize);
+plotIterator = 1;
+outputTime = p.firstTime;    
+
+%meanProduction = p.v_PLC;
+theta = p.v_PLC ./ p.gammaShape;
+%v_PLC = p.v_PLC;
 
 %% SIMULATION LOOP
-        
+    
 for t = 0:p.dt:p.totalTime
     
-    randomNumbers = ((p.noiseMemory).*randomNumbers + (1-p.noiseMemory).*normrnd(1,p.sigma, [xSize, ySize]));
+    %randomNumbers = ((p.noiseMemory).*randomNumbers + (1-p.noiseMemory).*exprnd(1, [xSize, ySize]));
+    v_PLC = gamrnd(p.gammaShape,theta, [xSize, ySize]);
     
     % Implement random flashes
-    if ~timeUntilPulse
+    if timeUntilPulse <= 0
         [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
         IP3(xPulse, yPulse) = IP3(xPulse, yPulse) + p.IP3Pulse;
-        timeUntilPulse = poissrnd((p.pulseTimeConstant(t) / p.dt));
+        timeUntilPulse = exprnd(p.pulseTimeConstant(t));
         disp('Pulse Occured');
     else
-        timeUntilPulse = timeUntilPulse - 1;
+        timeUntilPulse = timeUntilPulse - p.dt;
     end
     
-    
-    IP3     = IP3 .* normrnd(1,p.sigma2*p.dt,[xSize, ySize]);
-    IP3(IP3<0) = 0;
     IP3(IP3 > p.maxIP3) = p.maxIP3;
     
     outputFlag = evaluateFlags( CaC, CaER, IP3, IP3R, p.maxIP3 ) > 0;
@@ -128,25 +134,15 @@ for t = 0:p.dt:p.totalTime
     I2          = IP3 .^ 2;
     
     % Calculate rates
-%     v_PLC       =  p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]);
-%     v_deg       = p.k_6 .* IP3;
-%     
-%     %v_rel       = (CaER - CaC) .* ((p.k_1 .* IP3R .* (IP3.^p.n ./ (p.k_2.^p.n + IP3.^p.n)) .* (p.b + ((1 - p.b) .* CaC) ./ (p.k_3 + CaC))) + p.v_leak); 
-%     v_rel       = (CaER - CaC) .* (p.k_1 + p.k_2 .* IP3R .* C2 .* I2) ./ (p.K_Ca.^2 + C2) ./ (p.K_IP3.^2 + I2); 
-%     v_SERCA     = (p.k_5 .* C2) ./ (p.k_6 .^2 + C2);
-%     
-%     dIP3Rdt     =  p.k_7 .* (p.k_8.^2 ./ (p.k_8.^2 + C2) - IP3R);
-
-    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_a^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
-    v_PLC  = p.v_PLC .* randomNumbers;
+    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_a.^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
+    %v_PLC  = p.v_PLC .* randomNumbers;
     v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
     v_deg   = p.k_9.*IP3;
-    v_media    = p.v_40 - (p.k_5 .* CaC);
+    %v_media    = p.v_40 - (p.k_5 .* CaC);
+    v_media    =  p.P_Ca_media .* (p.Ca_media - CaC);
     dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
     
-    
-    
-    
+    v_PLC (v_PLC < 0) = 0;
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
     switch p.boundCondition
@@ -175,7 +171,7 @@ for t = 0:p.dt:p.totalTime
 %     dCaERdt     = p.beta .* (v_SERCA - v_rel);
 %     dIP3dt      = v_PLC - v_deg + dif_IP3;
     dCaCdt  = v_rel - v_SERCA + v_media + dif_Ca;
-    dCaERdt = p.beta * (v_SERCA - v_rel);
+    dCaERdt = p.beta .* (v_SERCA - v_rel);
     dIP3dt  = v_PLC - v_deg + dif_IP3;
     
     % Update concentrations with forward euler method
@@ -192,7 +188,7 @@ for t = 0:p.dt:p.totalTime
         if any(p.outputModes==3) % Check if realtime output is requested
             if dimensions == 1
                 %plotOneConcentration( xs, CaC, domainSizey, p );
-                plotConcentrations( xs, CaC, randomNumbers, IP3, IP3R, domainSizey, p )
+                plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSizey, p )
                 drawnow
             elseif dimensions == 2
                 imshow(CaC, p.CaBound);
@@ -211,9 +207,11 @@ for t = 0:p.dt:p.totalTime
     
     % Record concentration of Calcium
     frame = frame + 1;
-    if p.kymDim(2)&&any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
+    if t>=outputTime&&(any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4))
         if dimensions == 1
-            CaC_plot(:,frame) = CaC;
+            CaC_plot(:,plotIterator) = CaC;
+            plotIterator = plotIterator + 1;
+            outputTime = t + p.outputInterval;
         end
     end
 end
@@ -230,7 +228,7 @@ if any(p.outputModes==1) % Calculate summary statistics
 end
 if any(p.outputModes==2) % Generate kymograph
     disp(['Saving kymograph: ' fileName]);
-    showFig(CaC_plot',[p.outputDirectory filesep fileName]);
+    showFig(CaC_plot',[p.outputDirectory filesep fileName],p);
 end
 if any(p.outputModes==4) % I broke this, this makes a video over time
     error('THIS HAS NOT BEEN WRITTEN');

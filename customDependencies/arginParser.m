@@ -1,4 +1,4 @@
-function [ outputFlag, fileName, p ] = arginParser( p, argumentsPassed )
+function [ outputFlag, fileName, p ] = arginParser( p, size, argumentsPassed )
 % Note to future-Pavel PLEASE PLEASE switch to input parser instead of eval
 
 outputFlag = 0;
@@ -12,21 +12,21 @@ end
 for i = 1:2:length(argumentsPassed)
     temp = argumentsPassed{i};
     if ~(temp(1)=='$') % If the input is not compartment-specific
-        eval([temp ' = ' num2str(argumentsPassed{i+1}) ';']);
+        eval(['p.' temp ' = ' num2str(argumentsPassed{i+1}) ';']);
     else % If input is compartment-specific, this is indicated with $
-        compartment = ones(xSize, ySize);
+        compartment = ones(size(1), size(2));
         
         if (temp(2)=='P') % Check if P or A
-            compartment(:, 1:round(ySize/2)) = 0;
+            compartment(:, 1:round(size(2)/2)) = 0;
         elseif (temp(2)=='A')
-            compartment(:, round(ySize/2):end) = 0;
+            compartment(:, round(size(2)/2):end) = 0;
         else
             error('$ flag used without A or P designation');
         end
         
         % Implement the change only in that compartment
         par = ['p.' temp(3:end)];
-        if (exist(par,'var'))
+        if (isfield(p,temp(3:end)))
             eval([par ' = compartment .* ' num2str(argumentsPassed{i+1}) ' + ~compartment .* ' par ';']);
         else
             disp(['Parameter does not exist: ' par]);

@@ -14,7 +14,7 @@ switch p.boundCondition
         if yBig; yPulseCoords = [yPulseCoords (ySize-yBig):(ySize)]; end
         if xSmall; xPulseCoords = [xPulseCoords 1:xSmall]; end
         if ySmall; yPulseCoords = [yPulseCoords 1:ySmall]; end
-    case 'noFlux'
+    case 'noflux'
         
     otherwise
         error('Boundary conditions unspecified');
