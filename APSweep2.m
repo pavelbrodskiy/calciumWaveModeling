@@ -16,7 +16,7 @@ P_Ca_media = 0.51;
 D_IP3   = 280;      % [uM/s^2]  Diffusion coefficient of IP3	
 D_Ca    = 20;       % [uM/s^2]	Effective diffusion coefficient of calcium
 P_IP3   = 1;            % [uM/s]    Gap-junctional permeability of IP3
-P_Ca    = 0.01*p.P_IP3;   % [uM/s]    Effective gap-junctional permeability of calcium
+P_Ca    = 0.01*P_IP3;   % [uM/s]    Effective gap-junctional permeability of calcium
 
 
 runNumber = 80;
