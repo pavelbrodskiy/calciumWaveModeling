@@ -108,6 +108,7 @@ for t = 0:p.dt:p.totalTime
         timeUntilPulse = timeUntilPulse - 1;
     end
     
+    
     IP3     = IP3 .* normrnd(1,p.sigma2*p.dt,[xSize, ySize]);
     IP3(IP3<0) = 0;
     IP3(IP3 > p.maxIP3) = p.maxIP3;
@@ -130,15 +131,17 @@ for t = 0:p.dt:p.totalTime
 %     v_SERCA     = (p.k_5 .* C2) ./ (p.k_6 .^2 + C2);
 %     
 %     dIP3Rdt     =  p.k_7 .* (p.k_8.^2 ./ (p.k_8.^2 + C2) - IP3R);
+
     v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_a^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
-    %v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]) + p.v_7*C2./(p.K_Ca^2+C2);
-    v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]) + p.v_7*C2;
-    %v_SERCA = p.k_3.*CaC;
+    v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]);
     v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
-    v_out   = p.k_5.*CaC;
     v_deg   = p.k_9.*IP3;
-    v_in    = p.v_40+p.v_41.*I2./(p.K_r.^2+I2);
+    v_media    = p.v_40 - (p.k_5 .* CaC);
     dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
+    
+    
+    
+    
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
     if dimensions == 1
@@ -153,7 +156,7 @@ for t = 0:p.dt:p.totalTime
 %     dCaCdt      = v_rel - v_SERCA + dif_Ca;
 %     dCaERdt     = p.beta .* (v_SERCA - v_rel);
 %     dIP3dt      = v_PLC - v_deg + dif_IP3;
-    dCaCdt  = v_rel - v_SERCA + v_in - v_out + dif_Ca;
+    dCaCdt  = v_rel - v_SERCA + v_media + dif_Ca;
     dCaERdt = p.beta * (v_SERCA - v_rel);
     dIP3dt  = v_PLC - v_deg + dif_IP3;
     
@@ -168,12 +171,10 @@ for t = 0:p.dt:p.totalTime
     % Output the frame realtime
     if mod(frame, framesPerOutput) == 0
         disp([num2str(100*t/p.totalTime) '% done with simulation']);
-        max(CaC(:))
         if any(p.outputModes==3) % Check if realtime output is requested
             if dimensions == 1
                 %plotOneConcentration( xs, CaC, domainSizey, p );
                 plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSizey, p )
-                min(IP3)
                 drawnow
             elseif dimensions == 2
                 imshow(CaC, p.CaBound);

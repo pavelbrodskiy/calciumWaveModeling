@@ -46,10 +46,11 @@ p = catstruct(p1, p2);
 
 % Initialize simulation description variables
 domainSizey         = p.cellNumber * p.cellSize;
-ySize               = domainSizey / p.dx;
+ySize               = round(domainSizey / p.dx);
+
 if p.cellRows > 1
     domainSizex     = p.cellRows * p.cellSize;
-    xSize           = domainSizex / p.dx;
+    xSize           = round(domainSizex / p.dx);
     dimensions      = 2;
 else
     xSize           = 1;
@@ -75,9 +76,9 @@ end
 
 if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
     if dimensions == 1
-        CaC_plot = zeros(ySize, totalFrames);
+        CaC_plot = zeros(ySize, p.kymDim(2));
     elseif dimensions == 2
-        CaC_plot = zeros(xSize, ySize, p.outFrames);
+        CaC_plot2D = zeros(xSize, ySize, p.outFrames);
     else
         disp('Simulation dimensions unknown');
         outputFlag = 6;
@@ -94,9 +95,13 @@ IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 Deff_Ca = 1./(1./p.D_Ca + 1./(p.P_Ca .* p.cellSize));
 Deff_IP3 = 1./(1./p.D_IP3 + 1./(p.P_IP3 .* p.cellSize));
 
-%% SIMULATION LOOP
+randomNumbers = zeros(xSize, ySize);
 
+%% SIMULATION LOOP
+        
 for t = 0:p.dt:p.totalTime
+    
+    randomNumbers = ((p.noiseMemory).*randomNumbers + (1-p.noiseMemory).*normrnd(1,p.sigma, [xSize, ySize]));
     
     % Implement random flashes
     if ~timeUntilPulse
@@ -107,6 +112,7 @@ for t = 0:p.dt:p.totalTime
     else
         timeUntilPulse = timeUntilPulse - 1;
     end
+    
     
     IP3     = IP3 .* normrnd(1,p.sigma2*p.dt,[xSize, ySize]);
     IP3(IP3<0) = 0;
@@ -132,14 +138,10 @@ for t = 0:p.dt:p.totalTime
 %     dIP3Rdt     =  p.k_7 .* (p.k_8.^2 ./ (p.k_8.^2 + C2) - IP3R);
 
     v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_a^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
-    %v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]) + p.v_7*C2./(p.K_Ca^2+C2);
-    v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]) + p.v_7*C2;
-    %v_SERCA = p.k_3.*CaC;
+    v_PLC  = p.v_PLC .* randomNumbers;
     v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
-%     v_media   = p.P_Ca_media .* (p.Ca_media - CaC);
-    %v_media   = p.P_Ca_media - (p.Ca_media .* CaC);
     v_deg   = p.k_9.*IP3;
-    v_media    = p.v_40+p.v_41.*I2./(p.K_r.^2+I2)- p.k_5 .* CaC;
+    v_media    = p.v_40 - (p.k_5 .* CaC);
     dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
     
     
@@ -147,12 +149,25 @@ for t = 0:p.dt:p.totalTime
     
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
-    if dimensions == 1
-        dif_Ca	= Deff_Ca .* del2Periodic1D(CaC, p.dx);
-        dif_IP3	= Deff_IP3 .* del2Periodic1D(IP3, p.dx);
-    elseif dimensions == 2
-        dif_Ca	= Deff_Ca .* del2Periodic2D(CaC, p.dx);
-        dif_IP3	= Deff_IP3 .* del2Periodic2D(IP3, p.dx);
+    switch p.boundCondition
+        case 'per'
+            if dimensions == 1
+                dif_Ca	= Deff_Ca .* del2Periodic1D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2Periodic1D(IP3, p.dx);
+            elseif dimensions == 2
+                dif_Ca	= Deff_Ca .* del2Periodic2D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2Periodic2D(IP3, p.dx);
+            end
+        case 'noflux'
+            if dimensions == 1
+                dif_Ca	= Deff_Ca .* del2NoFlux1D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2NoFlux1D(IP3, p.dx);
+            elseif dimensions == 2
+                dif_Ca	= Deff_Ca .* del2NoFlux2D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2NoFlux2D(IP3, p.dx);
+            end
+        otherwise
+            error('incorrect boundary')
     end
     
     % Solve for partial from rates and laplacian
@@ -174,12 +189,10 @@ for t = 0:p.dt:p.totalTime
     % Output the frame realtime
     if mod(frame, framesPerOutput) == 0
         disp([num2str(100*t/p.totalTime) '% done with simulation']);
-        max(CaC(:))
         if any(p.outputModes==3) % Check if realtime output is requested
             if dimensions == 1
                 %plotOneConcentration( xs, CaC, domainSizey, p );
-                plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSizey, p )
-                min(IP3)
+                plotConcentrations( xs, CaC, randomNumbers, IP3, IP3R, domainSizey, p )
                 drawnow
             elseif dimensions == 2
                 imshow(CaC, p.CaBound);
@@ -192,13 +205,13 @@ for t = 0:p.dt:p.totalTime
             end
         end
         if dimensions == 2 && frame
-            CaC_plot(:,:,frame) = CaC;
+            CaC_plot2D(:,:,frame) = CaC;
         end
     end
     
     % Record concentration of Calcium
     frame = frame + 1;
-    if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
+    if p.kymDim(2)&&any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
         if dimensions == 1
             CaC_plot(:,frame) = CaC;
         end
@@ -216,8 +229,8 @@ if any(p.outputModes==1) % Calculate summary statistics
     [ summaryStatistics.frequency, summaryStatistics.amplitude, summaryStatistics.width ] = analyzeWaveOutput( CaC_plot(:,p.outputStart:end), p.dx, p.dt );
 end
 if any(p.outputModes==2) % Generate kymograph
-    disp(['Saving chymograph: ' fileName]);
-    showFig(CaC_plot(:,p.outputStart:end)',[p.outputDirectory filesep fileName]);
+    disp(['Saving kymograph: ' fileName]);
+    showFig(CaC_plot',[p.outputDirectory filesep fileName]);
 end
 if any(p.outputModes==4) % I broke this, this makes a video over time
     error('THIS HAS NOT BEEN WRITTEN');

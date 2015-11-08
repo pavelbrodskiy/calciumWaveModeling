@@ -455,96 +455,112 @@ function [ p ] = defaultParameters()
 %     dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
 
 % Hofer Model Parameters
-p.k_1     = 0.0004;	% [1/s]     Rate constant of calcium leak from ER
-p.k_2     = 0.08;     % [1/s]     Rate constant of calcium release through IP3
-p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
-p.v_41    = 0.2;      % [uM/s]    Maximal rate of activation-dependent calcium influx
-p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
-p.k_6     = 4;        % [1/s]     Rate constant of IP3R inactivation
-p.k_9     = 0.08;     % [1/s]     Rate constant of IP3 degradation     
-p.K_IP3	  = 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
-p.K_a     = 0.2;      % [uM]      Half-saturation constant for calcium activation of IP3R
-p.K_i     = 0.2;      % [uM]      Half-saturation constant for calcium inhibition of IP3R
-p.K_r     = 1;        % [uM]      Half-saturation constant for agonist-dependent calcium entry
-p.D_IP3   = 280;      % [uM/s^2]  Diffusion coefficient of IP3	
-p.D_Ca    = 20;       % [uM/s^2]	Effective diffusion coefficient of calcium
-p.beta    = 20;       %           Ratio of the effective volumes for calcium of cytoplasm and ER
-p.v_PLC   = 1e-2;         % [uM/s]    Rate of PLCb
-p.k_gam   = 1e-2;    %uM
-p.gam     = p.k_gam * 3;    %uM/sec
-p.P_IP3   = 1;            % [uM/s]    Gap-junctional permeability of IP3
-p.P_Ca    = 0.01*p.P_IP3;   % [uM/s]    Effective gap-junctional permeability of calcium
-p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
-p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
-
-p.Ca_cyto_0	= 0;            % [uM]      Initial concentration of Ca2+ in cytoplasm
-p.Ca_ER_0	= 30;           % [uM]      Initial concentration of Ca2+ in ER
-p.IP3_0     = 0;            % [uM]      Initial concentration of IP3
-p.IP3R_0	= 1;            % [uM]      Initial active concentration of IP3R
-
-p.pulseTimeConstant = @(t) inf;	% [s]       Average time between pulses
-p.IP3Pulse          = 50;    % [uM]      Concentration of IP3 in affected coordinates
-p.IP3Extent         = 1;    % [um]      Extent of IP3 pulse
-p.sigma     = 0;         % [   ]     Standard deviation of production of IP3
-p.sigma2        =0; % DO NOT USE OR GHOSTS
-
-% p.Ca_media = 0.05;
-% p.P_Ca_media = 0.5;
-
-p.Ca_media = 0.10;
-% .015 =  p.P_Ca_media .* (p.Ca_media - CaC)
-p.P_Ca_media = .015 ./ (p.Ca_media - 0.02);
-
-% Flux from media is around 0.5 * (0.02-0.05) = .015
-% If media Ca is around 10, then P should be around 0.5/333= 1.5e-3
-
-% p.Ca_media = 10;
-% p.P_Ca_media = 1.5e-4;
-% p.P_Ca_media = 0;
-
-p.v_40    = 0;    % [uM/s]    Rate of calcium leak across the plasma membrane
-p.k_5     = 0;      % [1/s]     Rate constant of calcium extrusion
-p.v_7     = 0;         % [uM/s]    Maximal rate of PLCd
-p.v_41    = 0;      % [uM/s]    Maximal rate of activation-dependent calcium influx
+% p.k_1     = 0.0004;	% [1/s]     Rate constant of calcium leak from ER
+% p.k_2     = 0.08;     % [1/s]     Rate constant of calcium release through IP3
+% p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
+% p.v_41    = 0.2;      % [uM/s]    Maximal rate of activation-dependent calcium influx
+% p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
+% p.k_6     = 4;        % [1/s]     Rate constant of IP3R inactivation
+% p.k_9     = 0.08;     % [1/s]     Rate constant of IP3 degradation     
+% p.K_IP3	  = 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
+% p.K_a     = 0.2;      % [uM]      Half-saturation constant for calcium activation of IP3R
+% p.K_i     = 0.2;      % [uM]      Half-saturation constant for calcium inhibition of IP3R
+% p.K_r     = 1;        % [uM]      Half-saturation constant for agonist-dependent calcium entry
+% p.D_IP3   = 280;      % [uM/s^2]  Diffusion coefficient of IP3	
+% p.D_Ca    = 20;       % [uM/s^2]	Effective diffusion coefficient of calcium
+% p.beta    = 20;       %           Ratio of the effective volumes for calcium of cytoplasm and ER
+% p.v_PLC   = 1e-2;         % [uM/s]    Rate of PLCb
+% p.k_gam   = 1e-2;    %uM
+% p.gam     = p.k_gam * 3;    %uM/sec
+% p.P_IP3   = 1;            % [uM/s]    Gap-junctional permeability of IP3
+% p.P_Ca    = 0.01*p.P_IP3;   % [uM/s]    Effective gap-junctional permeability of calcium
+% p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
+% p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
+% 
+% p.Ca_cyto_0	= 0;            % [uM]      Initial concentration of Ca2+ in cytoplasm
+% p.Ca_ER_0	= 30;           % [uM]      Initial concentration of Ca2+ in ER
+% p.IP3_0     = 0;            % [uM]      Initial concentration of IP3
+% p.IP3R_0	= 1;            % [uM]      Initial active concentration of IP3R
+% 
+% p.pulseTimeConstant = @(t) inf;	% [s]       Average time between pulses
+% p.IP3Pulse          = 50;    % [uM]      Concentration of IP3 in affected coordinates
+% p.IP3Extent         = 1;    % [um]      Extent of IP3 pulse
+% p.sigma     = 0;         % [   ]     Standard deviation of production of IP3
+% p.sigma2        =0; % DO NOT USE OR GHOSTS
+% 
+% % p.Ca_media = 0.05;
+% % p.P_Ca_media = 0.5;
+% 
+% p.Ca_media = 0.10;
+% % .015 =  p.P_Ca_media .* (p.Ca_media - CaC)
+% p.P_Ca_media = .015 ./ (p.Ca_media - 0.02);
+% 
+% % Flux from media is around 0.5 * (0.02-0.05) = .015
+% % If media Ca is around 10, then P should be around 0.5/333= 1.5e-3
+% 
+% % p.Ca_media = 10;
+% % p.P_Ca_media = 1.5e-4;
+% % p.P_Ca_media = 0;
+% 
+% p.v_40    = 0;    % [uM/s]    Rate of calcium leak across the plasma membrane
+% p.k_5     = 0;      % [1/s]     Rate constant of calcium extrusion
+% p.v_7     = 0;         % [uM/s]    Maximal rate of PLCd
+% p.v_41    = 0;      % [uM/s]    Maximal rate of activation-dependent calcium influx
 
 %% FINAL AICHE MODEL
 
 % Hofer Model Parameters
-p.k_1     = 0.0004;	% [1/s]     Rate constant of calcium leak from ER
-p.k_2     = 0.08;     % [1/s]     Rate constant of calcium release through IP3
-p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
-p.v_41    = 0.2;      % [uM/s]    Maximal rate of activation-dependent calcium influx
-p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
-p.k_6     = 4;        % [1/s]     Rate constant of IP3R inactivation
-p.k_9     = 0.08;     % [1/s]     Rate constant of IP3 degradation     
 p.K_IP3	  = 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
 p.K_a     = 0.2;      % [uM]      Half-saturation constant for calcium activation of IP3R
 p.K_i     = 0.2;      % [uM]      Half-saturation constant for calcium inhibition of IP3R
 p.K_r     = 1;        % [uM]      Half-saturation constant for agonist-dependent calcium entry
+p.beta    = 20;       %           Ratio of the effective volumes for calcium of cytoplasm and ER
+p.v_PLC   = 1e-2;         % [uM/s]    Rate of PLC-gamma
+p.k_1     = 0.0004;	% [1/s]     Rate constant of calcium leak from ER
+p.k_2     = 0.08;     % [1/s]     Rate constant of calcium release through IP3
+p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
+p.k_6     = 4;        % [1/s]     Rate constant of IP3R inactivation
+p.k_9     = 0.08;     % [1/s]     Rate constant of IP3 degradation     
+p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
+p.k_gam   = 0.03;    %uM
+p.gam     = p.k_gam * 3;    %uM/sec
+
 p.D_IP3   = 280;      % [uM/s^2]  Diffusion coefficient of IP3	
 p.D_Ca    = 20;       % [uM/s^2]	Effective diffusion coefficient of calcium
-p.beta    = 20;       %           Ratio of the effective volumes for calcium of cytoplasm and ER
-p.v_PLC   = 1e-2;         % [uM/s]    Rate of PLCb
-p.k_gam   = 1e-2;    %uM
-p.gam     = p.k_gam * 3;    %uM/sec
 p.P_IP3   = 1;            % [uM/s]    Gap-junctional permeability of IP3
 p.P_Ca    = 0.01*p.P_IP3;   % [uM/s]    Effective gap-junctional permeability of calcium
+
+p.Ca_cyto_0         = 0;            % [uM]      Initial concentration of Ca2+ in cytoplasm
+p.Ca_ER_0           = 60;           % [uM]      Initial concentration of Ca2+ in ER
+p.IP3_0             = .15;            % [uM]      Initial concentration of IP3
+p.IP3R_0            = 1;            % [uM]      Initial active concentration of IP3R
+
+% Tuneable
+p.v_PLC   = 1e-2;         % [uM/s]    Rate of PLC-gamma
+p.noiseMemory = 0;    
+p.sigma   = 2;         % [   ]     Standard deviation of production of IP3
+
+p.K_a     = 0.2;      % [uM]      Half-saturation constant for calcium activation of IP3R
+p.K_IP3	  = 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
+p.K_i     = 0.09;      % [uM]      Half-saturation constant for calcium inhibition of IP3R
+p.K_r     = 1;        % [uM]      Half-saturation constant for agonist-dependent calcium entry
+
+p.k_1     = 0.0004;	% [1/s]     Rate constant of calcium leak from ER
 p.v_40    = 0.025;    % [uM/s]    Rate of calcium leak across the plasma membrane
+p.k_2     = 0.08;     % [1/s]     Rate constant of calcium release through IP3
 p.k_5     = 0.5;      % [1/s]     Rate constant of calcium extrusion
+p.k_gam   = 0.02;    %uM
 
-p.Ca_cyto_0	= 0;            % [uM]      Initial concentration of Ca2+ in cytoplasm
-p.Ca_ER_0	= 30;           % [uM]      Initial concentration of Ca2+ in ER
-p.IP3_0     = 0;            % [uM]      Initial concentration of IP3
-p.IP3R_0	= 1;            % [uM]      Initial active concentration of IP3R
+p.gam     = p.k_gam * 4;    %uM/sec
+p.k_6     = 4 / p.K_i * 0.3;        % [1/s]     Rate constant of IP3R inactivation
+p.k_9     = 0.08;     % [1/s]     Rate constant of IP3 degradation     
 
+
+% Control Parameters
 p.pulseTimeConstant = @(t) inf;	% [s]       Average time between pulses
 p.IP3Pulse          = 50;    % [uM]      Concentration of IP3 in affected coordinates
 p.IP3Extent         = 1;    % [um]      Extent of IP3 pulse
-p.sigma     = 0;         % [   ]     Standard deviation of production of IP3
-p.sigma2        =0; % DO NOT USE OR GHOSTS
-
-p.v_7     = 0;         % [uM/s]    Maximal rate of PLCd
-p.v_41    = 0;      % [uM/s]    Maximal rate of activation-dependent calcium influx
+p.sigma2            = 0; % DO NOT USE OR GHOSTS
 
 end
 
