@@ -86,8 +86,7 @@ if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
 end
 
 % Initialize random pulse variables
-lambda = (p.pulseTimeConstant / p.dt);
-timeUntilPulse = poissrnd(lambda);
+timeUntilPulse = poissrnd((p.pulseTimeConstant(0) / p.dt));
 IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
 
 %% HOMOGENIZE DIFFUSIVITY
@@ -99,16 +98,18 @@ Deff_IP3 = 1./(1./p.D_IP3 + 1./(p.P_IP3 .* p.cellSize));
 
 for t = 0:p.dt:p.totalTime
     
-    timeUntilPulse = timeUntilPulse - 1;
-    
     % Implement random flashes
     if ~timeUntilPulse
         [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
         IP3(xPulse, yPulse) = IP3(xPulse, yPulse) + p.IP3Pulse;
-        timeUntilPulse = poissrnd(lambda);
+        timeUntilPulse = poissrnd((p.pulseTimeConstant(t) / p.dt));
         disp('Pulse Occured');
-    end    
+    else
+        timeUntilPulse = timeUntilPulse - 1;
+    end
     
+    IP3     = IP3 .* normrnd(1,p.sigma2*p.dt,[xSize, ySize]);
+    IP3(IP3<0) = 0;
     IP3(IP3 > p.maxIP3) = p.maxIP3;
     
     outputFlag = evaluateFlags( CaC, CaER, IP3, IP3R, p.maxIP3 ) > 0;
@@ -121,14 +122,23 @@ for t = 0:p.dt:p.totalTime
     I2          = IP3 .^ 2;
     
     % Calculate rates
-    v_PLC       =  p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]);
-    v_deg       = p.k_6 .* IP3;
-    
-    %v_rel       = (CaER - CaC) .* ((p.k_1 .* IP3R .* (IP3.^p.n ./ (p.k_2.^p.n + IP3.^p.n)) .* (p.b + ((1 - p.b) .* CaC) ./ (p.k_1 + CaC))) + p.v_leak); 
-    v_rel       = (CaER - CaC) .* (k_1 + k_2 .* IP3R .* C2 .* I2) ./ (K_Ca+C2) ./ (); 
-    v_SERCA     = (p.k_5 .* C2) ./ (p.k_6 .^2 + C2);
-    
-    dIP3Rdt     =  p.k_7 .* (p.k_8.^2 ./ (p.k_8.^2 + C2) - IP3R);
+%     v_PLC       =  p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]);
+%     v_deg       = p.k_6 .* IP3;
+%     
+%     %v_rel       = (CaER - CaC) .* ((p.k_1 .* IP3R .* (IP3.^p.n ./ (p.k_2.^p.n + IP3.^p.n)) .* (p.b + ((1 - p.b) .* CaC) ./ (p.k_3 + CaC))) + p.v_leak); 
+%     v_rel       = (CaER - CaC) .* (p.k_1 + p.k_2 .* IP3R .* C2 .* I2) ./ (p.K_Ca.^2 + C2) ./ (p.K_IP3.^2 + I2); 
+%     v_SERCA     = (p.k_5 .* C2) ./ (p.k_6 .^2 + C2);
+%     
+%     dIP3Rdt     =  p.k_7 .* (p.k_8.^2 ./ (p.k_8.^2 + C2) - IP3R);
+    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_a^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
+    %v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]) + p.v_7*C2./(p.K_Ca^2+C2);
+    v_PLC  = p.v_PLC .* normrnd(1,p.sigma, [xSize, ySize]) + p.v_7*C2;
+    %v_SERCA = p.k_3.*CaC;
+    v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
+    v_out   = p.k_5.*CaC;
+    v_deg   = p.k_9.*IP3;
+    v_in    = p.v_40+p.v_41.*I2./(p.K_r.^2+I2);
+    dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
     
     % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
     if dimensions == 1
@@ -140,9 +150,12 @@ for t = 0:p.dt:p.totalTime
     end
     
     % Solve for partial from rates and laplacian
-    dCaCdt      = v_rel - v_SERCA + dif_Ca;
-    dCaERdt     = p.beta .* (v_SERCA - v_rel);
-    dIP3dt      = v_PLC - v_deg + dif_IP3;
+%     dCaCdt      = v_rel - v_SERCA + dif_Ca;
+%     dCaERdt     = p.beta .* (v_SERCA - v_rel);
+%     dIP3dt      = v_PLC - v_deg + dif_IP3;
+    dCaCdt  = v_rel - v_SERCA + v_in - v_out + dif_Ca;
+    dCaERdt = p.beta * (v_SERCA - v_rel);
+    dIP3dt  = v_PLC - v_deg + dif_IP3;
     
     % Update concentrations with forward euler method
     CaC         = CaC  + dCaCdt  * p.dt;
@@ -155,6 +168,7 @@ for t = 0:p.dt:p.totalTime
     % Output the frame realtime
     if mod(frame, framesPerOutput) == 0
         disp([num2str(100*t/p.totalTime) '% done with simulation']);
+        max(CaC(:))
         if any(p.outputModes==3) % Check if realtime output is requested
             if dimensions == 1
                 %plotOneConcentration( xs, CaC, domainSizey, p );
@@ -207,4 +221,5 @@ if any(p.outputModes==4) % I broke this, this makes a video over time
 end
 
 toc
+summaryStatistics.runTime = toc;
 
