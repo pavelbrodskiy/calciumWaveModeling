@@ -1,0 +1,2520 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>calciumWaveSimulation</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-11-08"><meta name="DC.source" content="calciumWaveSimulation.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">PARAMETER DECLARATION</a></li><li><a href="#4">INPUT PARSING</a></li><li><a href="#5">INITIALIZATION</a></li><li><a href="#6">HOMOGENIZE DIFFUSIVITY</a></li><li><a href="#7">SIMULATION LOOP</a></li><li><a href="#8">OUTPUT</a></li></ul></div><pre class="codeinput"><span class="comment">% Calcium wave model for Drosophila wing imaginal disc, based roughly on</span>
+<span class="comment">% Hofer 2002 astrocyte model</span>
+<span class="comment">%</span>
+<span class="comment">% Pavel Brodskiy, University of Notre Dame, Zartman Lab, 10.27.15</span>
+<span class="comment">% Hofer Paper: http://www.jneurosci.org/content/22/12/4850.full</span>
+<span class="comment">% Narciso Paper: http://iopscience.iop.org/article/10.1088/1478-3975/12/5/056005</span>
+
+<span class="keyword">function</span> [ outputFlag, summaryStatistics ] = calciumWaveSimulation (varargin)
+</pre><pre class="codeinput"><span class="comment">% INPUTS: Input each parameter which is going to be changed as two inputs:</span>
+<span class="comment">% first a string identifying the parameter, and then a value. Use $A or $P</span>
+<span class="comment">% to selectivly change parameters in the A or P compartment respectively.</span>
+<span class="comment">%</span>
+<span class="comment">% EXAMPLE: [ outputFlag, frequency, amplitude, width ] = calciumWaveSimulation2 ('v_7', 0.02);</span>
+<span class="comment">% EXAMPLE: [ outputFlag, frequency, amplitude, width ] = calciumWaveSimulation2 ('$Pv_7', 0.02);</span>
+<span class="comment">%</span>
+<span class="comment">% OUTPUTS: The simulation will run once, then output a frequency, amputude,</span>
+<span class="comment">% and a width at half height for each position in the domain. The</span>
+<span class="comment">% function will also save a chymograph of the simulation with a name</span>
+<span class="comment">% derived from the modified inputs.</span>
+<span class="comment">%</span>
+<span class="comment">% Frequency (1/period)</span>
+<span class="comment">% Amplitude</span>
+<span class="comment">% Wave width</span>
+<span class="comment">% Wave speed</span>
+
+addpath(<span class="string">'downloadedDependencies'</span>,<span class="string">'customDependencies'</span>);
+
+tic
+close <span class="string">all</span>
+</pre><h2>PARAMETER DECLARATION<a name="3"></a></h2><pre class="codeinput">p1 = defaultParameters(1);
+p2 = defaultSettings();
+
+p = catstruct(p1, p2);
+</pre><h2>INPUT PARSING<a name="4"></a></h2><pre class="codeinput"><span class="comment">% Initialize simulation description variables</span>
+domainSizey         = p.cellNumber * p.cellSize;
+ySize               = round(domainSizey / p.dx);
+
+<span class="keyword">if</span> p.cellRows &gt; 1
+    domainSizex     = p.cellRows * p.cellSize;
+    xSize           = round(domainSizex / p.dx);
+    dimensions      = 2;
+<span class="keyword">else</span>
+    xSize           = 1;
+    dimensions      = 1;
+<span class="keyword">end</span>
+
+[ outputFlag, fileName, p ] = arginParser( p, [xSize, ySize], varargin );
+</pre><h2>INITIALIZATION<a name="5"></a></h2><pre class="codeinput"><span class="comment">% In future version:</span>
+<span class="comment">% Solve for steady state, convert to modeling units if needed (uM, um, s,</span>
+<span class="comment">% 1e-18 moles), calculate squares of constants, initialize variables</span>
+
+
+totalFrames         = uint32((p.totalTime / p.dt));
+framesPerOutput     = uint32(totalFrames / p.outFrames);
+frame               = 0;
+xs                  = p.dx:p.dx:domainSizey;
+
+<span class="comment">% Initialize simulation variables</span>
+CaC                 = ones(xSize, ySize) * p.Ca_cyto_0;
+CaER                = ones(xSize, ySize) * p.Ca_ER_0;
+IP3                 = ones(xSize, ySize) * p.IP3_0;
+IP3R                = ones(xSize, ySize) * p.IP3R_0;
+
+<span class="comment">% Initialize output variables</span>
+summaryStatistics.blankField = NaN;
+<span class="keyword">if</span> any(p.outputModes==4)
+    aviobj = VideoWriter([<span class="string">'video '</span> fileName <span class="string">'.avi'</span>]);
+    open(aviobj);
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
+    <span class="keyword">if</span> dimensions == 1
+        CaC_plot = zeros(ySize, p.kymDim);
+    <span class="keyword">elseif</span> dimensions == 2
+        CaC_plot2D = zeros(xSize, ySize, p.outFrames);
+    <span class="keyword">else</span>
+        disp(<span class="string">'Simulation dimensions unknown'</span>);
+        outputFlag = 6;
+        <span class="keyword">return</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Initialize random pulse variables</span>
+timeUntilPulse = exprnd(p.pulseTimeCon(0));
+IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
+</pre><h2>HOMOGENIZE DIFFUSIVITY<a name="6"></a></h2><pre class="codeinput">Deff_Ca = 1./(1./p.D_Ca + 1./(p.P_Ca .* p.cellSize));
+Deff_IP3 = 1./(1./p.D_IP3 + 1./(p.P_IP3 .* p.cellSize));
+
+<span class="comment">%randomNumbers = zeros(xSize, ySize);</span>
+plotIterator = 1;
+outputTime = p.firstTime;
+
+<span class="comment">%meanProduction = p.v_PLC;</span>
+theta = p.v_PLC ./ p.gammaShape;
+<span class="comment">%v_PLC = p.v_PLC;</span>
+</pre><h2>SIMULATION LOOP<a name="7"></a></h2><pre class="codeinput"><span class="keyword">for</span> t = 0:p.dt:p.totalTime
+
+    <span class="comment">% Implement random flashes</span>
+    <span class="keyword">if</span> timeUntilPulse &lt;= 0
+        [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
+        IP3(xPulse, yPulse) = IP3(xPulse, yPulse) + p.IP3Pulse;
+        timeUntilPulse = exprnd(p.pulseTimeConstant(t));
+        disp(<span class="string">'Pulse Occured'</span>);
+    <span class="keyword">else</span>
+        timeUntilPulse = timeUntilPulse - p.dt;
+    <span class="keyword">end</span>
+
+    <span class="comment">% Bookeeping</span>
+    outputFlag = evaluateFlags( CaC, CaER, IP3, IP3R, p.maxIP3 ) &gt; 0;
+    <span class="keyword">if</span> outputFlag &gt; 0
+        <span class="keyword">return</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% Calculate squares for speed</span>
+    C2          = CaC .^ 2;
+    I2          = IP3 .^ 2;
+
+    <span class="comment">% Calculate rates</span>
+    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_Ca.^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
+    v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
+    v_deg   = p.k_9.*IP3;
+    v_media    =  p.P_Ca_media .* (p.Ca_media - CaC);
+    dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
+    v_PLC = gamrnd(p.gammaShape,theta, [xSize, ySize]);
+
+    <span class="comment">% Calculate laplacian of Ca and IP3 with no-flux boundary conditions</span>
+    <span class="keyword">switch</span> p.boundCondition
+        <span class="keyword">case</span> <span class="string">'per'</span>
+            <span class="keyword">if</span> dimensions == 1
+                dif_Ca	= Deff_Ca .* del2Periodic1D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2Periodic1D(IP3, p.dx);
+            <span class="keyword">elseif</span> dimensions == 2
+                dif_Ca	= Deff_Ca .* del2Periodic2D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2Periodic2D(IP3, p.dx);
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> <span class="string">'noflux'</span>
+            <span class="keyword">if</span> dimensions == 1
+                dif_Ca	= Deff_Ca .* del2NoFlux1D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2NoFlux1D(IP3, p.dx);
+            <span class="keyword">elseif</span> dimensions == 2
+                dif_Ca	= Deff_Ca .* del2NoFlux2D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2NoFlux2D(IP3, p.dx);
+            <span class="keyword">end</span>
+        <span class="keyword">otherwise</span>
+            error(<span class="string">'incorrect boundary'</span>)
+    <span class="keyword">end</span>
+
+    <span class="comment">% Solve for partial from rates and laplacian</span>
+    dCaCdt  = v_rel - v_SERCA + v_media + dif_Ca;
+    dCaERdt = p.beta .* (v_SERCA - v_rel);
+    dIP3dt  = v_PLC - v_deg + dif_IP3;
+
+    <span class="comment">% Update concentrations with forward euler method</span>
+    CaC         = CaC  + dCaCdt  * p.dt;
+    CaER        = CaER + dCaERdt * p.dt;
+    IP3         = IP3  + dIP3dt  * p.dt;
+    IP3R        = IP3R + dIP3Rdt * p.dt;
+
+    <span class="comment">% Output the frame realtime</span>
+    <span class="keyword">if</span> mod(frame, framesPerOutput) == 0
+        disp([num2str(100*t/p.totalTime) <span class="string">'% done with simulation'</span>]);
+        <span class="keyword">if</span> any(p.outputModes==3) <span class="comment">% Check if realtime output is requested</span>
+            <span class="keyword">if</span> dimensions == 1
+                <span class="comment">%plotOneConcentration( xs, CaC, domainSizey, p );</span>
+                plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSizey, p )
+                drawnow
+            <span class="keyword">elseif</span> dimensions == 2
+                imshow(CaC, p.CaBound);
+                colormap(<span class="string">'jet'</span>);
+                drawnow
+            <span class="keyword">else</span>
+                disp(<span class="string">'Simulation dimensions unknown'</span>);
+                outputFlag = 6;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">if</span> dimensions == 2 &amp;&amp; frame
+            CaC_plot2D(:,:,frame) = CaC;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% Record concentration of calcium</span>
+    frame = frame + 1;
+    <span class="keyword">if</span> t&gt;=outputTime&amp;&amp;(any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4))
+        <span class="keyword">if</span> dimensions == 1
+            CaC_plot(:,plotIterator) = CaC;
+            plotIterator = plotIterator + 1;
+            outputTime = t + p.outputInterval;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">0% done with simulation
+0.05% done with simulation
+0.1% done with simulation
+0.15% done with simulation
+0.2% done with simulation
+0.25% done with simulation
+0.3% done with simulation
+0.35% done with simulation
+0.4% done with simulation
+0.45% done with simulation
+0.5% done with simulation
+0.55% done with simulation
+0.6% done with simulation
+0.65% done with simulation
+0.7% done with simulation
+0.75% done with simulation
+0.8% done with simulation
+0.85% done with simulation
+0.9% done with simulation
+0.95% done with simulation
+1% done with simulation
+1.05% done with simulation
+1.1% done with simulation
+1.15% done with simulation
+1.2% done with simulation
+1.25% done with simulation
+1.3% done with simulation
+1.35% done with simulation
+1.4% done with simulation
+1.45% done with simulation
+1.5% done with simulation
+1.55% done with simulation
+1.6% done with simulation
+1.65% done with simulation
+1.7% done with simulation
+1.75% done with simulation
+1.8% done with simulation
+1.85% done with simulation
+1.9% done with simulation
+1.95% done with simulation
+2% done with simulation
+2.05% done with simulation
+2.1% done with simulation
+2.15% done with simulation
+2.2% done with simulation
+2.25% done with simulation
+2.3% done with simulation
+2.35% done with simulation
+2.4% done with simulation
+2.45% done with simulation
+2.5% done with simulation
+2.55% done with simulation
+2.6% done with simulation
+2.65% done with simulation
+2.7% done with simulation
+2.75% done with simulation
+2.8% done with simulation
+2.85% done with simulation
+2.9% done with simulation
+2.95% done with simulation
+3% done with simulation
+3.05% done with simulation
+3.1% done with simulation
+3.15% done with simulation
+3.2% done with simulation
+3.25% done with simulation
+3.3% done with simulation
+3.35% done with simulation
+3.4% done with simulation
+3.45% done with simulation
+3.5% done with simulation
+3.55% done with simulation
+3.6% done with simulation
+3.65% done with simulation
+3.7% done with simulation
+3.75% done with simulation
+3.8% done with simulation
+3.85% done with simulation
+3.9% done with simulation
+3.95% done with simulation
+4% done with simulation
+4.05% done with simulation
+4.1% done with simulation
+4.15% done with simulation
+4.2% done with simulation
+4.25% done with simulation
+4.3% done with simulation
+4.35% done with simulation
+4.4% done with simulation
+4.45% done with simulation
+4.5% done with simulation
+4.55% done with simulation
+4.6% done with simulation
+4.65% done with simulation
+4.7% done with simulation
+4.75% done with simulation
+4.8% done with simulation
+4.85% done with simulation
+4.9% done with simulation
+4.95% done with simulation
+5% done with simulation
+5.05% done with simulation
+5.1% done with simulation
+5.15% done with simulation
+5.2% done with simulation
+5.25% done with simulation
+5.3% done with simulation
+5.35% done with simulation
+5.4% done with simulation
+5.45% done with simulation
+5.5% done with simulation
+5.55% done with simulation
+5.6% done with simulation
+5.65% done with simulation
+5.7% done with simulation
+5.75% done with simulation
+5.8% done with simulation
+5.85% done with simulation
+5.9% done with simulation
+5.95% done with simulation
+6% done with simulation
+6.05% done with simulation
+6.1% done with simulation
+6.15% done with simulation
+6.2% done with simulation
+6.25% done with simulation
+6.3% done with simulation
+6.35% done with simulation
+6.4% done with simulation
+6.45% done with simulation
+6.5% done with simulation
+6.55% done with simulation
+6.6% done with simulation
+6.65% done with simulation
+6.7% done with simulation
+6.75% done with simulation
+6.8% done with simulation
+6.85% done with simulation
+6.9% done with simulation
+6.95% done with simulation
+7% done with simulation
+7.05% done with simulation
+7.1% done with simulation
+7.15% done with simulation
+7.2% done with simulation
+7.25% done with simulation
+7.3% done with simulation
+7.35% done with simulation
+7.4% done with simulation
+7.45% done with simulation
+7.5% done with simulation
+7.55% done with simulation
+7.6% done with simulation
+7.65% done with simulation
+7.7% done with simulation
+7.75% done with simulation
+7.8% done with simulation
+7.85% done with simulation
+7.9% done with simulation
+7.95% done with simulation
+8% done with simulation
+8.05% done with simulation
+8.1% done with simulation
+8.15% done with simulation
+8.2% done with simulation
+8.25% done with simulation
+8.3% done with simulation
+8.35% done with simulation
+8.4% done with simulation
+8.45% done with simulation
+8.5% done with simulation
+8.55% done with simulation
+8.6% done with simulation
+8.65% done with simulation
+8.7% done with simulation
+8.75% done with simulation
+8.8% done with simulation
+8.85% done with simulation
+8.9% done with simulation
+8.95% done with simulation
+9% done with simulation
+9.05% done with simulation
+9.1% done with simulation
+9.15% done with simulation
+9.2% done with simulation
+9.25% done with simulation
+9.3% done with simulation
+9.35% done with simulation
+9.4% done with simulation
+9.45% done with simulation
+9.5% done with simulation
+9.55% done with simulation
+9.6% done with simulation
+9.65% done with simulation
+9.7% done with simulation
+9.75% done with simulation
+9.8% done with simulation
+9.85% done with simulation
+9.9% done with simulation
+9.95% done with simulation
+10% done with simulation
+10.05% done with simulation
+10.1% done with simulation
+10.15% done with simulation
+10.2% done with simulation
+10.25% done with simulation
+10.3% done with simulation
+10.35% done with simulation
+10.4% done with simulation
+10.45% done with simulation
+10.5% done with simulation
+10.55% done with simulation
+10.6% done with simulation
+10.65% done with simulation
+10.7% done with simulation
+10.75% done with simulation
+10.8% done with simulation
+10.85% done with simulation
+10.9% done with simulation
+10.95% done with simulation
+11% done with simulation
+11.05% done with simulation
+11.1% done with simulation
+11.15% done with simulation
+11.2% done with simulation
+11.25% done with simulation
+11.3% done with simulation
+11.35% done with simulation
+11.4% done with simulation
+11.45% done with simulation
+11.5% done with simulation
+11.55% done with simulation
+11.6% done with simulation
+11.65% done with simulation
+11.7% done with simulation
+11.75% done with simulation
+11.8% done with simulation
+11.85% done with simulation
+11.9% done with simulation
+11.95% done with simulation
+12% done with simulation
+12.05% done with simulation
+12.1% done with simulation
+12.15% done with simulation
+12.2% done with simulation
+12.25% done with simulation
+12.3% done with simulation
+12.35% done with simulation
+12.4% done with simulation
+12.45% done with simulation
+12.5% done with simulation
+12.55% done with simulation
+12.6% done with simulation
+12.65% done with simulation
+12.7% done with simulation
+12.75% done with simulation
+12.8% done with simulation
+12.85% done with simulation
+12.9% done with simulation
+12.95% done with simulation
+13% done with simulation
+13.05% done with simulation
+13.1% done with simulation
+13.15% done with simulation
+13.2% done with simulation
+13.25% done with simulation
+13.3% done with simulation
+13.35% done with simulation
+13.4% done with simulation
+13.45% done with simulation
+13.5% done with simulation
+13.55% done with simulation
+13.6% done with simulation
+13.65% done with simulation
+13.7% done with simulation
+13.75% done with simulation
+13.8% done with simulation
+13.85% done with simulation
+13.9% done with simulation
+13.95% done with simulation
+14% done with simulation
+14.05% done with simulation
+14.1% done with simulation
+14.15% done with simulation
+14.2% done with simulation
+14.25% done with simulation
+14.3% done with simulation
+14.35% done with simulation
+14.4% done with simulation
+14.45% done with simulation
+14.5% done with simulation
+14.55% done with simulation
+14.6% done with simulation
+14.65% done with simulation
+14.7% done with simulation
+14.75% done with simulation
+14.8% done with simulation
+14.85% done with simulation
+14.9% done with simulation
+14.95% done with simulation
+15% done with simulation
+15.05% done with simulation
+15.1% done with simulation
+15.15% done with simulation
+15.2% done with simulation
+15.25% done with simulation
+15.3% done with simulation
+15.35% done with simulation
+15.4% done with simulation
+15.45% done with simulation
+15.5% done with simulation
+15.55% done with simulation
+15.6% done with simulation
+15.65% done with simulation
+15.7% done with simulation
+15.75% done with simulation
+15.8% done with simulation
+15.85% done with simulation
+15.9% done with simulation
+15.95% done with simulation
+16% done with simulation
+16.05% done with simulation
+16.1% done with simulation
+16.15% done with simulation
+16.2% done with simulation
+16.25% done with simulation
+16.3% done with simulation
+16.35% done with simulation
+16.4% done with simulation
+16.45% done with simulation
+16.5% done with simulation
+16.55% done with simulation
+16.6% done with simulation
+16.65% done with simulation
+16.7% done with simulation
+16.75% done with simulation
+16.8% done with simulation
+16.85% done with simulation
+16.9% done with simulation
+16.95% done with simulation
+17% done with simulation
+17.05% done with simulation
+17.1% done with simulation
+17.15% done with simulation
+17.2% done with simulation
+17.25% done with simulation
+17.3% done with simulation
+17.35% done with simulation
+17.4% done with simulation
+17.45% done with simulation
+17.5% done with simulation
+17.55% done with simulation
+17.6% done with simulation
+17.65% done with simulation
+17.7% done with simulation
+17.75% done with simulation
+17.8% done with simulation
+17.85% done with simulation
+17.9% done with simulation
+17.95% done with simulation
+18% done with simulation
+18.05% done with simulation
+18.1% done with simulation
+18.15% done with simulation
+18.2% done with simulation
+18.25% done with simulation
+18.3% done with simulation
+18.35% done with simulation
+18.4% done with simulation
+18.45% done with simulation
+18.5% done with simulation
+18.55% done with simulation
+18.6% done with simulation
+18.65% done with simulation
+18.7% done with simulation
+18.75% done with simulation
+18.8% done with simulation
+18.85% done with simulation
+18.9% done with simulation
+18.95% done with simulation
+19% done with simulation
+19.05% done with simulation
+19.1% done with simulation
+19.15% done with simulation
+19.2% done with simulation
+19.25% done with simulation
+19.3% done with simulation
+19.35% done with simulation
+19.4% done with simulation
+19.45% done with simulation
+19.5% done with simulation
+19.55% done with simulation
+19.6% done with simulation
+19.65% done with simulation
+19.7% done with simulation
+19.75% done with simulation
+19.8% done with simulation
+19.85% done with simulation
+19.9% done with simulation
+19.95% done with simulation
+20% done with simulation
+20.05% done with simulation
+20.1% done with simulation
+20.15% done with simulation
+20.2% done with simulation
+20.25% done with simulation
+20.3% done with simulation
+20.35% done with simulation
+20.4% done with simulation
+20.45% done with simulation
+20.5% done with simulation
+20.55% done with simulation
+20.6% done with simulation
+20.65% done with simulation
+20.7% done with simulation
+20.75% done with simulation
+20.8% done with simulation
+20.85% done with simulation
+20.9% done with simulation
+20.95% done with simulation
+21% done with simulation
+21.05% done with simulation
+21.1% done with simulation
+21.15% done with simulation
+21.2% done with simulation
+21.25% done with simulation
+21.3% done with simulation
+21.35% done with simulation
+21.4% done with simulation
+21.45% done with simulation
+21.5% done with simulation
+21.55% done with simulation
+21.6% done with simulation
+21.65% done with simulation
+21.7% done with simulation
+21.75% done with simulation
+21.8% done with simulation
+21.85% done with simulation
+21.9% done with simulation
+21.95% done with simulation
+22% done with simulation
+22.05% done with simulation
+22.1% done with simulation
+22.15% done with simulation
+22.2% done with simulation
+22.25% done with simulation
+22.3% done with simulation
+22.35% done with simulation
+22.4% done with simulation
+22.45% done with simulation
+22.5% done with simulation
+22.55% done with simulation
+22.6% done with simulation
+22.65% done with simulation
+22.7% done with simulation
+22.75% done with simulation
+22.8% done with simulation
+22.85% done with simulation
+22.9% done with simulation
+22.95% done with simulation
+23% done with simulation
+23.05% done with simulation
+23.1% done with simulation
+23.15% done with simulation
+23.2% done with simulation
+23.25% done with simulation
+23.3% done with simulation
+23.35% done with simulation
+23.4% done with simulation
+23.45% done with simulation
+23.5% done with simulation
+23.55% done with simulation
+23.6% done with simulation
+23.65% done with simulation
+23.7% done with simulation
+23.75% done with simulation
+23.8% done with simulation
+23.85% done with simulation
+23.9% done with simulation
+23.95% done with simulation
+24% done with simulation
+24.05% done with simulation
+24.1% done with simulation
+24.15% done with simulation
+24.2% done with simulation
+24.25% done with simulation
+24.3% done with simulation
+24.35% done with simulation
+24.4% done with simulation
+24.45% done with simulation
+24.5% done with simulation
+24.55% done with simulation
+24.6% done with simulation
+24.65% done with simulation
+24.7% done with simulation
+24.75% done with simulation
+24.8% done with simulation
+24.85% done with simulation
+24.9% done with simulation
+24.95% done with simulation
+25% done with simulation
+25.05% done with simulation
+25.1% done with simulation
+25.15% done with simulation
+25.2% done with simulation
+25.25% done with simulation
+25.3% done with simulation
+25.35% done with simulation
+25.4% done with simulation
+25.45% done with simulation
+25.5% done with simulation
+25.55% done with simulation
+25.6% done with simulation
+25.65% done with simulation
+25.7% done with simulation
+25.75% done with simulation
+25.8% done with simulation
+25.85% done with simulation
+25.9% done with simulation
+25.95% done with simulation
+26% done with simulation
+26.05% done with simulation
+26.1% done with simulation
+26.15% done with simulation
+26.2% done with simulation
+26.25% done with simulation
+26.3% done with simulation
+26.35% done with simulation
+26.4% done with simulation
+26.45% done with simulation
+26.5% done with simulation
+26.55% done with simulation
+26.6% done with simulation
+26.65% done with simulation
+26.7% done with simulation
+26.75% done with simulation
+26.8% done with simulation
+26.85% done with simulation
+26.9% done with simulation
+26.95% done with simulation
+27% done with simulation
+27.05% done with simulation
+27.1% done with simulation
+27.15% done with simulation
+27.2% done with simulation
+27.25% done with simulation
+27.3% done with simulation
+27.35% done with simulation
+27.4% done with simulation
+27.45% done with simulation
+27.5% done with simulation
+27.55% done with simulation
+27.6% done with simulation
+27.65% done with simulation
+27.7% done with simulation
+27.75% done with simulation
+27.8% done with simulation
+27.85% done with simulation
+27.9% done with simulation
+27.95% done with simulation
+28% done with simulation
+28.05% done with simulation
+28.1% done with simulation
+28.15% done with simulation
+28.2% done with simulation
+28.25% done with simulation
+28.3% done with simulation
+28.35% done with simulation
+28.4% done with simulation
+28.45% done with simulation
+28.5% done with simulation
+28.55% done with simulation
+28.6% done with simulation
+28.65% done with simulation
+28.7% done with simulation
+28.75% done with simulation
+28.8% done with simulation
+28.85% done with simulation
+28.9% done with simulation
+28.95% done with simulation
+29% done with simulation
+29.05% done with simulation
+29.1% done with simulation
+29.15% done with simulation
+29.2% done with simulation
+29.25% done with simulation
+29.3% done with simulation
+29.35% done with simulation
+29.4% done with simulation
+29.45% done with simulation
+29.5% done with simulation
+29.55% done with simulation
+29.6% done with simulation
+29.65% done with simulation
+29.7% done with simulation
+29.75% done with simulation
+29.8% done with simulation
+29.85% done with simulation
+29.9% done with simulation
+29.95% done with simulation
+30% done with simulation
+30.05% done with simulation
+30.1% done with simulation
+30.15% done with simulation
+30.2% done with simulation
+30.25% done with simulation
+30.3% done with simulation
+30.35% done with simulation
+30.4% done with simulation
+30.45% done with simulation
+30.5% done with simulation
+30.55% done with simulation
+30.6% done with simulation
+30.65% done with simulation
+30.7% done with simulation
+30.75% done with simulation
+30.8% done with simulation
+30.85% done with simulation
+30.9% done with simulation
+30.95% done with simulation
+31% done with simulation
+31.05% done with simulation
+31.1% done with simulation
+31.15% done with simulation
+31.2% done with simulation
+31.25% done with simulation
+31.3% done with simulation
+31.35% done with simulation
+31.4% done with simulation
+31.45% done with simulation
+31.5% done with simulation
+31.55% done with simulation
+31.6% done with simulation
+31.65% done with simulation
+31.7% done with simulation
+31.75% done with simulation
+31.8% done with simulation
+31.85% done with simulation
+31.9% done with simulation
+31.95% done with simulation
+32% done with simulation
+32.05% done with simulation
+32.1% done with simulation
+32.15% done with simulation
+32.2% done with simulation
+32.25% done with simulation
+32.3% done with simulation
+32.35% done with simulation
+32.4% done with simulation
+32.45% done with simulation
+32.5% done with simulation
+32.55% done with simulation
+32.6% done with simulation
+32.65% done with simulation
+32.7% done with simulation
+32.75% done with simulation
+32.8% done with simulation
+32.85% done with simulation
+32.9% done with simulation
+32.95% done with simulation
+33% done with simulation
+33.05% done with simulation
+33.1% done with simulation
+33.15% done with simulation
+33.2% done with simulation
+33.25% done with simulation
+33.3% done with simulation
+33.35% done with simulation
+33.4% done with simulation
+33.45% done with simulation
+33.5% done with simulation
+33.55% done with simulation
+33.6% done with simulation
+33.65% done with simulation
+33.7% done with simulation
+33.75% done with simulation
+33.8% done with simulation
+33.85% done with simulation
+33.9% done with simulation
+33.95% done with simulation
+34% done with simulation
+34.05% done with simulation
+34.1% done with simulation
+34.15% done with simulation
+34.2% done with simulation
+34.25% done with simulation
+34.3% done with simulation
+34.35% done with simulation
+34.4% done with simulation
+34.45% done with simulation
+34.5% done with simulation
+34.55% done with simulation
+34.6% done with simulation
+34.65% done with simulation
+34.7% done with simulation
+34.75% done with simulation
+34.8% done with simulation
+34.85% done with simulation
+34.9% done with simulation
+34.95% done with simulation
+35% done with simulation
+35.05% done with simulation
+35.1% done with simulation
+35.15% done with simulation
+35.2% done with simulation
+35.25% done with simulation
+35.3% done with simulation
+35.35% done with simulation
+35.4% done with simulation
+35.45% done with simulation
+35.5% done with simulation
+35.55% done with simulation
+35.6% done with simulation
+35.65% done with simulation
+35.7% done with simulation
+35.75% done with simulation
+35.8% done with simulation
+35.85% done with simulation
+35.9% done with simulation
+35.95% done with simulation
+36% done with simulation
+36.05% done with simulation
+36.1% done with simulation
+36.15% done with simulation
+36.2% done with simulation
+36.25% done with simulation
+36.3% done with simulation
+36.35% done with simulation
+36.4% done with simulation
+36.45% done with simulation
+36.5% done with simulation
+36.55% done with simulation
+36.6% done with simulation
+36.65% done with simulation
+36.7% done with simulation
+36.75% done with simulation
+36.8% done with simulation
+36.85% done with simulation
+36.9% done with simulation
+36.95% done with simulation
+37% done with simulation
+37.05% done with simulation
+37.1% done with simulation
+37.15% done with simulation
+37.2% done with simulation
+37.25% done with simulation
+37.3% done with simulation
+37.35% done with simulation
+37.4% done with simulation
+37.45% done with simulation
+37.5% done with simulation
+37.55% done with simulation
+37.6% done with simulation
+37.65% done with simulation
+37.7% done with simulation
+37.75% done with simulation
+37.8% done with simulation
+37.85% done with simulation
+37.9% done with simulation
+37.95% done with simulation
+38% done with simulation
+38.05% done with simulation
+38.1% done with simulation
+38.15% done with simulation
+38.2% done with simulation
+38.25% done with simulation
+38.3% done with simulation
+38.35% done with simulation
+38.4% done with simulation
+38.45% done with simulation
+38.5% done with simulation
+38.55% done with simulation
+38.6% done with simulation
+38.65% done with simulation
+38.7% done with simulation
+38.75% done with simulation
+38.8% done with simulation
+38.85% done with simulation
+38.9% done with simulation
+38.95% done with simulation
+39% done with simulation
+39.05% done with simulation
+39.1% done with simulation
+39.15% done with simulation
+39.2% done with simulation
+39.25% done with simulation
+39.3% done with simulation
+39.35% done with simulation
+39.4% done with simulation
+39.45% done with simulation
+39.5% done with simulation
+39.55% done with simulation
+39.6% done with simulation
+39.65% done with simulation
+39.7% done with simulation
+39.75% done with simulation
+39.8% done with simulation
+39.85% done with simulation
+39.9% done with simulation
+39.95% done with simulation
+40% done with simulation
+40.05% done with simulation
+40.1% done with simulation
+40.15% done with simulation
+40.2% done with simulation
+40.25% done with simulation
+40.3% done with simulation
+40.35% done with simulation
+40.4% done with simulation
+40.45% done with simulation
+40.5% done with simulation
+40.55% done with simulation
+40.6% done with simulation
+40.65% done with simulation
+40.7% done with simulation
+40.75% done with simulation
+40.8% done with simulation
+40.85% done with simulation
+40.9% done with simulation
+40.95% done with simulation
+41% done with simulation
+41.05% done with simulation
+41.1% done with simulation
+41.15% done with simulation
+41.2% done with simulation
+41.25% done with simulation
+41.3% done with simulation
+41.35% done with simulation
+41.4% done with simulation
+41.45% done with simulation
+41.5% done with simulation
+41.55% done with simulation
+41.6% done with simulation
+41.65% done with simulation
+41.7% done with simulation
+41.75% done with simulation
+41.8% done with simulation
+41.85% done with simulation
+41.9% done with simulation
+41.95% done with simulation
+42% done with simulation
+42.05% done with simulation
+42.1% done with simulation
+42.15% done with simulation
+42.2% done with simulation
+42.25% done with simulation
+42.3% done with simulation
+42.35% done with simulation
+42.4% done with simulation
+42.45% done with simulation
+42.5% done with simulation
+42.55% done with simulation
+42.6% done with simulation
+42.65% done with simulation
+42.7% done with simulation
+42.75% done with simulation
+42.8% done with simulation
+42.85% done with simulation
+42.9% done with simulation
+42.95% done with simulation
+43% done with simulation
+43.05% done with simulation
+43.1% done with simulation
+43.15% done with simulation
+43.2% done with simulation
+43.25% done with simulation
+43.3% done with simulation
+43.35% done with simulation
+43.4% done with simulation
+43.45% done with simulation
+43.5% done with simulation
+43.55% done with simulation
+43.6% done with simulation
+43.65% done with simulation
+43.7% done with simulation
+43.75% done with simulation
+43.8% done with simulation
+43.85% done with simulation
+43.9% done with simulation
+43.95% done with simulation
+44% done with simulation
+44.05% done with simulation
+44.1% done with simulation
+44.15% done with simulation
+44.2% done with simulation
+44.25% done with simulation
+44.3% done with simulation
+44.35% done with simulation
+44.4% done with simulation
+44.45% done with simulation
+44.5% done with simulation
+44.55% done with simulation
+44.6% done with simulation
+44.65% done with simulation
+44.7% done with simulation
+44.75% done with simulation
+44.8% done with simulation
+44.85% done with simulation
+44.9% done with simulation
+44.95% done with simulation
+45% done with simulation
+45.05% done with simulation
+45.1% done with simulation
+45.15% done with simulation
+45.2% done with simulation
+45.25% done with simulation
+45.3% done with simulation
+45.35% done with simulation
+45.4% done with simulation
+45.45% done with simulation
+45.5% done with simulation
+45.55% done with simulation
+45.6% done with simulation
+45.65% done with simulation
+45.7% done with simulation
+45.75% done with simulation
+45.8% done with simulation
+45.85% done with simulation
+45.9% done with simulation
+45.95% done with simulation
+46% done with simulation
+46.05% done with simulation
+46.1% done with simulation
+46.15% done with simulation
+46.2% done with simulation
+46.25% done with simulation
+46.3% done with simulation
+46.35% done with simulation
+46.4% done with simulation
+46.45% done with simulation
+46.5% done with simulation
+46.55% done with simulation
+46.6% done with simulation
+46.65% done with simulation
+46.7% done with simulation
+46.75% done with simulation
+46.8% done with simulation
+46.85% done with simulation
+46.9% done with simulation
+46.95% done with simulation
+47% done with simulation
+47.05% done with simulation
+47.1% done with simulation
+47.15% done with simulation
+47.2% done with simulation
+47.25% done with simulation
+47.3% done with simulation
+47.35% done with simulation
+47.4% done with simulation
+47.45% done with simulation
+47.5% done with simulation
+47.55% done with simulation
+47.6% done with simulation
+47.65% done with simulation
+47.7% done with simulation
+47.75% done with simulation
+47.8% done with simulation
+47.85% done with simulation
+47.9% done with simulation
+47.95% done with simulation
+48% done with simulation
+48.05% done with simulation
+48.1% done with simulation
+48.15% done with simulation
+48.2% done with simulation
+48.25% done with simulation
+48.3% done with simulation
+48.35% done with simulation
+48.4% done with simulation
+48.45% done with simulation
+48.5% done with simulation
+48.55% done with simulation
+48.6% done with simulation
+48.65% done with simulation
+48.7% done with simulation
+48.75% done with simulation
+48.8% done with simulation
+48.85% done with simulation
+48.9% done with simulation
+48.95% done with simulation
+49% done with simulation
+49.05% done with simulation
+49.1% done with simulation
+49.15% done with simulation
+49.2% done with simulation
+49.25% done with simulation
+49.3% done with simulation
+49.35% done with simulation
+49.4% done with simulation
+49.45% done with simulation
+49.5% done with simulation
+49.55% done with simulation
+49.6% done with simulation
+49.65% done with simulation
+49.7% done with simulation
+49.75% done with simulation
+49.8% done with simulation
+49.85% done with simulation
+49.9% done with simulation
+49.95% done with simulation
+50% done with simulation
+50.05% done with simulation
+50.1% done with simulation
+50.15% done with simulation
+50.2% done with simulation
+50.25% done with simulation
+50.3% done with simulation
+50.35% done with simulation
+50.4% done with simulation
+50.45% done with simulation
+50.5% done with simulation
+50.55% done with simulation
+50.6% done with simulation
+50.65% done with simulation
+50.7% done with simulation
+50.75% done with simulation
+50.8% done with simulation
+50.85% done with simulation
+50.9% done with simulation
+50.95% done with simulation
+51% done with simulation
+51.05% done with simulation
+51.1% done with simulation
+51.15% done with simulation
+51.2% done with simulation
+51.25% done with simulation
+51.3% done with simulation
+51.35% done with simulation
+51.4% done with simulation
+51.45% done with simulation
+51.5% done with simulation
+51.55% done with simulation
+51.6% done with simulation
+51.65% done with simulation
+51.7% done with simulation
+51.75% done with simulation
+51.8% done with simulation
+51.85% done with simulation
+51.9% done with simulation
+51.95% done with simulation
+52% done with simulation
+52.05% done with simulation
+52.1% done with simulation
+52.15% done with simulation
+52.2% done with simulation
+52.25% done with simulation
+52.3% done with simulation
+52.35% done with simulation
+52.4% done with simulation
+52.45% done with simulation
+52.5% done with simulation
+52.55% done with simulation
+52.6% done with simulation
+52.65% done with simulation
+52.7% done with simulation
+52.75% done with simulation
+52.8% done with simulation
+52.85% done with simulation
+52.9% done with simulation
+52.95% done with simulation
+53% done with simulation
+53.05% done with simulation
+53.1% done with simulation
+53.15% done with simulation
+53.2% done with simulation
+53.25% done with simulation
+53.3% done with simulation
+53.35% done with simulation
+53.4% done with simulation
+53.45% done with simulation
+53.5% done with simulation
+53.55% done with simulation
+53.6% done with simulation
+53.65% done with simulation
+53.7% done with simulation
+53.75% done with simulation
+53.8% done with simulation
+53.85% done with simulation
+53.9% done with simulation
+53.95% done with simulation
+54% done with simulation
+54.05% done with simulation
+54.1% done with simulation
+54.15% done with simulation
+54.2% done with simulation
+54.25% done with simulation
+54.3% done with simulation
+54.35% done with simulation
+54.4% done with simulation
+54.45% done with simulation
+54.5% done with simulation
+54.55% done with simulation
+54.6% done with simulation
+54.65% done with simulation
+54.7% done with simulation
+54.75% done with simulation
+54.8% done with simulation
+54.85% done with simulation
+54.9% done with simulation
+54.95% done with simulation
+55% done with simulation
+55.05% done with simulation
+55.1% done with simulation
+55.15% done with simulation
+55.2% done with simulation
+55.25% done with simulation
+55.3% done with simulation
+55.35% done with simulation
+55.4% done with simulation
+55.45% done with simulation
+55.5% done with simulation
+55.55% done with simulation
+55.6% done with simulation
+55.65% done with simulation
+55.7% done with simulation
+55.75% done with simulation
+55.8% done with simulation
+55.85% done with simulation
+55.9% done with simulation
+55.95% done with simulation
+56% done with simulation
+56.05% done with simulation
+56.1% done with simulation
+56.15% done with simulation
+56.2% done with simulation
+56.25% done with simulation
+56.3% done with simulation
+56.35% done with simulation
+56.4% done with simulation
+56.45% done with simulation
+56.5% done with simulation
+56.55% done with simulation
+56.6% done with simulation
+56.65% done with simulation
+56.7% done with simulation
+56.75% done with simulation
+56.8% done with simulation
+56.85% done with simulation
+56.9% done with simulation
+56.95% done with simulation
+57% done with simulation
+57.05% done with simulation
+57.1% done with simulation
+57.15% done with simulation
+57.2% done with simulation
+57.25% done with simulation
+57.3% done with simulation
+57.35% done with simulation
+57.4% done with simulation
+57.45% done with simulation
+57.5% done with simulation
+57.55% done with simulation
+57.6% done with simulation
+57.65% done with simulation
+57.7% done with simulation
+57.75% done with simulation
+57.8% done with simulation
+57.85% done with simulation
+57.9% done with simulation
+57.95% done with simulation
+58% done with simulation
+58.05% done with simulation
+58.1% done with simulation
+58.15% done with simulation
+58.2% done with simulation
+58.25% done with simulation
+58.3% done with simulation
+58.35% done with simulation
+58.4% done with simulation
+58.45% done with simulation
+58.5% done with simulation
+58.55% done with simulation
+58.6% done with simulation
+58.65% done with simulation
+58.7% done with simulation
+58.75% done with simulation
+58.8% done with simulation
+58.85% done with simulation
+58.9% done with simulation
+58.95% done with simulation
+59% done with simulation
+59.05% done with simulation
+59.1% done with simulation
+59.15% done with simulation
+59.2% done with simulation
+59.25% done with simulation
+59.3% done with simulation
+59.35% done with simulation
+59.4% done with simulation
+59.45% done with simulation
+59.5% done with simulation
+59.55% done with simulation
+59.6% done with simulation
+59.65% done with simulation
+59.7% done with simulation
+59.75% done with simulation
+59.8% done with simulation
+59.85% done with simulation
+59.9% done with simulation
+59.95% done with simulation
+60% done with simulation
+60.05% done with simulation
+60.1% done with simulation
+60.15% done with simulation
+60.2% done with simulation
+60.25% done with simulation
+60.3% done with simulation
+60.35% done with simulation
+60.4% done with simulation
+60.45% done with simulation
+60.5% done with simulation
+60.55% done with simulation
+60.6% done with simulation
+60.65% done with simulation
+60.7% done with simulation
+60.75% done with simulation
+60.8% done with simulation
+60.85% done with simulation
+60.9% done with simulation
+60.95% done with simulation
+61% done with simulation
+61.05% done with simulation
+61.1% done with simulation
+61.15% done with simulation
+61.2% done with simulation
+61.25% done with simulation
+61.3% done with simulation
+61.35% done with simulation
+61.4% done with simulation
+61.45% done with simulation
+61.5% done with simulation
+61.55% done with simulation
+61.6% done with simulation
+61.65% done with simulation
+61.7% done with simulation
+61.75% done with simulation
+61.8% done with simulation
+61.85% done with simulation
+61.9% done with simulation
+61.95% done with simulation
+62% done with simulation
+62.05% done with simulation
+62.1% done with simulation
+62.15% done with simulation
+62.2% done with simulation
+62.25% done with simulation
+62.3% done with simulation
+62.35% done with simulation
+62.4% done with simulation
+62.45% done with simulation
+62.5% done with simulation
+62.55% done with simulation
+62.6% done with simulation
+62.65% done with simulation
+62.7% done with simulation
+62.75% done with simulation
+62.8% done with simulation
+62.85% done with simulation
+62.9% done with simulation
+62.95% done with simulation
+63% done with simulation
+63.05% done with simulation
+63.1% done with simulation
+63.15% done with simulation
+63.2% done with simulation
+63.25% done with simulation
+63.3% done with simulation
+63.35% done with simulation
+63.4% done with simulation
+63.45% done with simulation
+63.5% done with simulation
+63.55% done with simulation
+63.6% done with simulation
+63.65% done with simulation
+63.7% done with simulation
+63.75% done with simulation
+63.8% done with simulation
+63.85% done with simulation
+63.9% done with simulation
+63.95% done with simulation
+64% done with simulation
+64.05% done with simulation
+64.1% done with simulation
+64.15% done with simulation
+64.2% done with simulation
+64.25% done with simulation
+64.3% done with simulation
+64.35% done with simulation
+64.4% done with simulation
+64.45% done with simulation
+64.5% done with simulation
+64.55% done with simulation
+64.6% done with simulation
+64.65% done with simulation
+64.7% done with simulation
+64.75% done with simulation
+64.8% done with simulation
+64.85% done with simulation
+64.9% done with simulation
+64.95% done with simulation
+65% done with simulation
+65.05% done with simulation
+65.1% done with simulation
+65.15% done with simulation
+65.2% done with simulation
+65.25% done with simulation
+65.3% done with simulation
+65.35% done with simulation
+65.4% done with simulation
+65.45% done with simulation
+65.5% done with simulation
+65.55% done with simulation
+65.6% done with simulation
+65.65% done with simulation
+65.7% done with simulation
+65.75% done with simulation
+65.8% done with simulation
+65.85% done with simulation
+65.9% done with simulation
+65.95% done with simulation
+66% done with simulation
+66.05% done with simulation
+66.1% done with simulation
+66.15% done with simulation
+66.2% done with simulation
+66.25% done with simulation
+66.3% done with simulation
+66.35% done with simulation
+66.4% done with simulation
+66.45% done with simulation
+66.5% done with simulation
+66.55% done with simulation
+66.6% done with simulation
+66.65% done with simulation
+66.7% done with simulation
+66.75% done with simulation
+66.8% done with simulation
+66.85% done with simulation
+66.9% done with simulation
+66.95% done with simulation
+67% done with simulation
+67.05% done with simulation
+67.1% done with simulation
+67.15% done with simulation
+67.2% done with simulation
+67.25% done with simulation
+67.3% done with simulation
+67.35% done with simulation
+67.4% done with simulation
+67.45% done with simulation
+67.5% done with simulation
+67.55% done with simulation
+67.6% done with simulation
+67.65% done with simulation
+67.7% done with simulation
+67.75% done with simulation
+67.8% done with simulation
+67.85% done with simulation
+67.9% done with simulation
+67.95% done with simulation
+68% done with simulation
+68.05% done with simulation
+68.1% done with simulation
+68.15% done with simulation
+68.2% done with simulation
+68.25% done with simulation
+68.3% done with simulation
+68.35% done with simulation
+68.4% done with simulation
+68.45% done with simulation
+68.5% done with simulation
+68.55% done with simulation
+68.6% done with simulation
+68.65% done with simulation
+68.7% done with simulation
+68.75% done with simulation
+68.8% done with simulation
+68.85% done with simulation
+68.9% done with simulation
+68.95% done with simulation
+69% done with simulation
+69.05% done with simulation
+69.1% done with simulation
+69.15% done with simulation
+69.2% done with simulation
+69.25% done with simulation
+69.3% done with simulation
+69.35% done with simulation
+69.4% done with simulation
+69.45% done with simulation
+69.5% done with simulation
+69.55% done with simulation
+69.6% done with simulation
+69.65% done with simulation
+69.7% done with simulation
+69.75% done with simulation
+69.8% done with simulation
+69.85% done with simulation
+69.9% done with simulation
+69.95% done with simulation
+70% done with simulation
+70.05% done with simulation
+70.1% done with simulation
+70.15% done with simulation
+70.2% done with simulation
+70.25% done with simulation
+70.3% done with simulation
+70.35% done with simulation
+70.4% done with simulation
+70.45% done with simulation
+70.5% done with simulation
+70.55% done with simulation
+70.6% done with simulation
+70.65% done with simulation
+70.7% done with simulation
+70.75% done with simulation
+70.8% done with simulation
+70.85% done with simulation
+70.9% done with simulation
+70.95% done with simulation
+71% done with simulation
+71.05% done with simulation
+71.1% done with simulation
+71.15% done with simulation
+71.2% done with simulation
+71.25% done with simulation
+71.3% done with simulation
+71.35% done with simulation
+71.4% done with simulation
+71.45% done with simulation
+71.5% done with simulation
+71.55% done with simulation
+71.6% done with simulation
+71.65% done with simulation
+71.7% done with simulation
+71.75% done with simulation
+71.8% done with simulation
+71.85% done with simulation
+71.9% done with simulation
+71.95% done with simulation
+72% done with simulation
+72.05% done with simulation
+72.1% done with simulation
+72.15% done with simulation
+72.2% done with simulation
+72.25% done with simulation
+72.3% done with simulation
+72.35% done with simulation
+72.4% done with simulation
+72.45% done with simulation
+72.5% done with simulation
+72.55% done with simulation
+72.6% done with simulation
+72.65% done with simulation
+72.7% done with simulation
+72.75% done with simulation
+72.8% done with simulation
+72.85% done with simulation
+72.9% done with simulation
+72.95% done with simulation
+73% done with simulation
+73.05% done with simulation
+73.1% done with simulation
+73.15% done with simulation
+73.2% done with simulation
+73.25% done with simulation
+73.3% done with simulation
+73.35% done with simulation
+73.4% done with simulation
+73.45% done with simulation
+73.5% done with simulation
+73.55% done with simulation
+73.6% done with simulation
+73.65% done with simulation
+73.7% done with simulation
+73.75% done with simulation
+73.8% done with simulation
+73.85% done with simulation
+73.9% done with simulation
+73.95% done with simulation
+74% done with simulation
+74.05% done with simulation
+74.1% done with simulation
+74.15% done with simulation
+74.2% done with simulation
+74.25% done with simulation
+74.3% done with simulation
+74.35% done with simulation
+74.4% done with simulation
+74.45% done with simulation
+74.5% done with simulation
+74.55% done with simulation
+74.6% done with simulation
+74.65% done with simulation
+74.7% done with simulation
+74.75% done with simulation
+74.8% done with simulation
+74.85% done with simulation
+74.9% done with simulation
+74.95% done with simulation
+75% done with simulation
+75.05% done with simulation
+75.1% done with simulation
+75.15% done with simulation
+75.2% done with simulation
+75.25% done with simulation
+75.3% done with simulation
+75.35% done with simulation
+75.4% done with simulation
+75.45% done with simulation
+75.5% done with simulation
+75.55% done with simulation
+75.6% done with simulation
+75.65% done with simulation
+75.7% done with simulation
+75.75% done with simulation
+75.8% done with simulation
+75.85% done with simulation
+75.9% done with simulation
+75.95% done with simulation
+76% done with simulation
+76.05% done with simulation
+76.1% done with simulation
+76.15% done with simulation
+76.2% done with simulation
+76.25% done with simulation
+76.3% done with simulation
+76.35% done with simulation
+76.4% done with simulation
+76.45% done with simulation
+76.5% done with simulation
+76.55% done with simulation
+76.6% done with simulation
+76.65% done with simulation
+76.7% done with simulation
+76.75% done with simulation
+76.8% done with simulation
+76.85% done with simulation
+76.9% done with simulation
+76.95% done with simulation
+77% done with simulation
+77.05% done with simulation
+77.1% done with simulation
+77.15% done with simulation
+77.2% done with simulation
+77.25% done with simulation
+77.3% done with simulation
+77.35% done with simulation
+77.4% done with simulation
+77.45% done with simulation
+77.5% done with simulation
+77.55% done with simulation
+77.6% done with simulation
+77.65% done with simulation
+77.7% done with simulation
+77.75% done with simulation
+77.8% done with simulation
+77.85% done with simulation
+77.9% done with simulation
+77.95% done with simulation
+78% done with simulation
+78.05% done with simulation
+78.1% done with simulation
+78.15% done with simulation
+78.2% done with simulation
+78.25% done with simulation
+78.3% done with simulation
+78.35% done with simulation
+78.4% done with simulation
+78.45% done with simulation
+78.5% done with simulation
+78.55% done with simulation
+78.6% done with simulation
+78.65% done with simulation
+78.7% done with simulation
+78.75% done with simulation
+78.8% done with simulation
+78.85% done with simulation
+78.9% done with simulation
+78.95% done with simulation
+79% done with simulation
+79.05% done with simulation
+79.1% done with simulation
+79.15% done with simulation
+79.2% done with simulation
+79.25% done with simulation
+79.3% done with simulation
+79.35% done with simulation
+79.4% done with simulation
+79.45% done with simulation
+79.5% done with simulation
+79.55% done with simulation
+79.6% done with simulation
+79.65% done with simulation
+79.7% done with simulation
+79.75% done with simulation
+79.8% done with simulation
+79.85% done with simulation
+79.9% done with simulation
+79.95% done with simulation
+80% done with simulation
+80.05% done with simulation
+80.1% done with simulation
+80.15% done with simulation
+80.2% done with simulation
+80.25% done with simulation
+80.3% done with simulation
+80.35% done with simulation
+80.4% done with simulation
+80.45% done with simulation
+80.5% done with simulation
+80.55% done with simulation
+80.6% done with simulation
+80.65% done with simulation
+80.7% done with simulation
+80.75% done with simulation
+80.8% done with simulation
+80.85% done with simulation
+80.9% done with simulation
+80.95% done with simulation
+81% done with simulation
+81.05% done with simulation
+81.1% done with simulation
+81.15% done with simulation
+81.2% done with simulation
+81.25% done with simulation
+81.3% done with simulation
+81.35% done with simulation
+81.4% done with simulation
+81.45% done with simulation
+81.5% done with simulation
+81.55% done with simulation
+81.6% done with simulation
+81.65% done with simulation
+81.7% done with simulation
+81.75% done with simulation
+81.8% done with simulation
+81.85% done with simulation
+81.9% done with simulation
+81.95% done with simulation
+82% done with simulation
+82.05% done with simulation
+82.1% done with simulation
+82.15% done with simulation
+82.2% done with simulation
+82.25% done with simulation
+82.3% done with simulation
+82.35% done with simulation
+82.4% done with simulation
+82.45% done with simulation
+82.5% done with simulation
+82.55% done with simulation
+82.6% done with simulation
+82.65% done with simulation
+82.7% done with simulation
+82.75% done with simulation
+82.8% done with simulation
+82.85% done with simulation
+82.9% done with simulation
+82.95% done with simulation
+83% done with simulation
+83.05% done with simulation
+83.1% done with simulation
+83.15% done with simulation
+83.2% done with simulation
+83.25% done with simulation
+83.3% done with simulation
+83.35% done with simulation
+83.4% done with simulation
+83.45% done with simulation
+83.5% done with simulation
+83.55% done with simulation
+83.6% done with simulation
+83.65% done with simulation
+83.7% done with simulation
+83.75% done with simulation
+83.8% done with simulation
+83.85% done with simulation
+83.9% done with simulation
+83.95% done with simulation
+84% done with simulation
+84.05% done with simulation
+84.1% done with simulation
+84.15% done with simulation
+84.2% done with simulation
+84.25% done with simulation
+84.3% done with simulation
+84.35% done with simulation
+84.4% done with simulation
+84.45% done with simulation
+84.5% done with simulation
+84.55% done with simulation
+84.6% done with simulation
+84.65% done with simulation
+84.7% done with simulation
+84.75% done with simulation
+84.8% done with simulation
+84.85% done with simulation
+84.9% done with simulation
+84.95% done with simulation
+85% done with simulation
+85.05% done with simulation
+85.1% done with simulation
+85.15% done with simulation
+85.2% done with simulation
+85.25% done with simulation
+85.3% done with simulation
+85.35% done with simulation
+85.4% done with simulation
+85.45% done with simulation
+85.5% done with simulation
+85.55% done with simulation
+85.6% done with simulation
+85.65% done with simulation
+85.7% done with simulation
+85.75% done with simulation
+85.8% done with simulation
+85.85% done with simulation
+85.9% done with simulation
+85.95% done with simulation
+86% done with simulation
+86.05% done with simulation
+86.1% done with simulation
+86.15% done with simulation
+86.2% done with simulation
+86.25% done with simulation
+86.3% done with simulation
+86.35% done with simulation
+86.4% done with simulation
+86.45% done with simulation
+86.5% done with simulation
+86.55% done with simulation
+86.6% done with simulation
+86.65% done with simulation
+86.7% done with simulation
+86.75% done with simulation
+86.8% done with simulation
+86.85% done with simulation
+86.9% done with simulation
+86.95% done with simulation
+87% done with simulation
+87.05% done with simulation
+87.1% done with simulation
+87.15% done with simulation
+87.2% done with simulation
+87.25% done with simulation
+87.3% done with simulation
+87.35% done with simulation
+87.4% done with simulation
+87.45% done with simulation
+87.5% done with simulation
+87.55% done with simulation
+87.6% done with simulation
+87.65% done with simulation
+87.7% done with simulation
+87.75% done with simulation
+87.8% done with simulation
+87.85% done with simulation
+87.9% done with simulation
+87.95% done with simulation
+88% done with simulation
+88.05% done with simulation
+88.1% done with simulation
+88.15% done with simulation
+88.2% done with simulation
+88.25% done with simulation
+88.3% done with simulation
+88.35% done with simulation
+88.4% done with simulation
+88.45% done with simulation
+88.5% done with simulation
+88.55% done with simulation
+88.6% done with simulation
+88.65% done with simulation
+88.7% done with simulation
+88.75% done with simulation
+88.8% done with simulation
+88.85% done with simulation
+88.9% done with simulation
+88.95% done with simulation
+89% done with simulation
+89.05% done with simulation
+89.1% done with simulation
+89.15% done with simulation
+89.2% done with simulation
+89.25% done with simulation
+89.3% done with simulation
+89.35% done with simulation
+89.4% done with simulation
+89.45% done with simulation
+89.5% done with simulation
+89.55% done with simulation
+89.6% done with simulation
+89.65% done with simulation
+89.7% done with simulation
+89.75% done with simulation
+89.8% done with simulation
+89.85% done with simulation
+89.9% done with simulation
+89.95% done with simulation
+90% done with simulation
+90.05% done with simulation
+90.1% done with simulation
+90.15% done with simulation
+90.2% done with simulation
+90.25% done with simulation
+90.3% done with simulation
+90.35% done with simulation
+90.4% done with simulation
+90.45% done with simulation
+90.5% done with simulation
+90.55% done with simulation
+90.6% done with simulation
+90.65% done with simulation
+90.7% done with simulation
+90.75% done with simulation
+90.8% done with simulation
+90.85% done with simulation
+90.9% done with simulation
+90.95% done with simulation
+91% done with simulation
+91.05% done with simulation
+91.1% done with simulation
+91.15% done with simulation
+91.2% done with simulation
+91.25% done with simulation
+91.3% done with simulation
+91.35% done with simulation
+91.4% done with simulation
+91.45% done with simulation
+91.5% done with simulation
+91.55% done with simulation
+91.6% done with simulation
+91.65% done with simulation
+91.7% done with simulation
+91.75% done with simulation
+91.8% done with simulation
+91.85% done with simulation
+91.9% done with simulation
+91.95% done with simulation
+92% done with simulation
+92.05% done with simulation
+92.1% done with simulation
+92.15% done with simulation
+92.2% done with simulation
+92.25% done with simulation
+92.3% done with simulation
+92.35% done with simulation
+92.4% done with simulation
+92.45% done with simulation
+92.5% done with simulation
+92.55% done with simulation
+92.6% done with simulation
+92.65% done with simulation
+92.7% done with simulation
+92.75% done with simulation
+92.8% done with simulation
+92.85% done with simulation
+92.9% done with simulation
+92.95% done with simulation
+93% done with simulation
+93.05% done with simulation
+93.1% done with simulation
+93.15% done with simulation
+93.2% done with simulation
+93.25% done with simulation
+93.3% done with simulation
+93.35% done with simulation
+93.4% done with simulation
+93.45% done with simulation
+93.5% done with simulation
+93.55% done with simulation
+93.6% done with simulation
+93.65% done with simulation
+93.7% done with simulation
+93.75% done with simulation
+93.8% done with simulation
+93.85% done with simulation
+93.9% done with simulation
+93.95% done with simulation
+94% done with simulation
+94.05% done with simulation
+94.1% done with simulation
+94.15% done with simulation
+94.2% done with simulation
+94.25% done with simulation
+94.3% done with simulation
+94.35% done with simulation
+94.4% done with simulation
+94.45% done with simulation
+94.5% done with simulation
+94.55% done with simulation
+94.6% done with simulation
+94.65% done with simulation
+94.7% done with simulation
+94.75% done with simulation
+94.8% done with simulation
+94.85% done with simulation
+94.9% done with simulation
+94.95% done with simulation
+95% done with simulation
+95.05% done with simulation
+95.1% done with simulation
+95.15% done with simulation
+95.2% done with simulation
+95.25% done with simulation
+95.3% done with simulation
+95.35% done with simulation
+95.4% done with simulation
+95.45% done with simulation
+95.5% done with simulation
+95.55% done with simulation
+95.6% done with simulation
+95.65% done with simulation
+95.7% done with simulation
+95.75% done with simulation
+95.8% done with simulation
+95.85% done with simulation
+95.9% done with simulation
+95.95% done with simulation
+96% done with simulation
+96.05% done with simulation
+96.1% done with simulation
+96.15% done with simulation
+96.2% done with simulation
+96.25% done with simulation
+96.3% done with simulation
+96.35% done with simulation
+96.4% done with simulation
+96.45% done with simulation
+96.5% done with simulation
+96.55% done with simulation
+96.6% done with simulation
+96.65% done with simulation
+96.7% done with simulation
+96.75% done with simulation
+96.8% done with simulation
+96.85% done with simulation
+96.9% done with simulation
+96.95% done with simulation
+97% done with simulation
+97.05% done with simulation
+97.1% done with simulation
+97.15% done with simulation
+97.2% done with simulation
+97.25% done with simulation
+97.3% done with simulation
+97.35% done with simulation
+97.4% done with simulation
+97.45% done with simulation
+97.5% done with simulation
+97.55% done with simulation
+97.6% done with simulation
+97.65% done with simulation
+97.7% done with simulation
+97.75% done with simulation
+97.8% done with simulation
+97.85% done with simulation
+97.9% done with simulation
+97.95% done with simulation
+98% done with simulation
+98.05% done with simulation
+98.1% done with simulation
+98.15% done with simulation
+98.2% done with simulation
+98.25% done with simulation
+98.3% done with simulation
+98.35% done with simulation
+98.4% done with simulation
+98.45% done with simulation
+98.5% done with simulation
+98.55% done with simulation
+98.6% done with simulation
+98.65% done with simulation
+98.7% done with simulation
+98.75% done with simulation
+98.8% done with simulation
+98.85% done with simulation
+98.9% done with simulation
+98.95% done with simulation
+99% done with simulation
+99.05% done with simulation
+99.1% done with simulation
+99.15% done with simulation
+99.2% done with simulation
+99.25% done with simulation
+99.3% done with simulation
+99.35% done with simulation
+99.4% done with simulation
+99.45% done with simulation
+99.5% done with simulation
+99.55% done with simulation
+99.6% done with simulation
+99.65% done with simulation
+99.7% done with simulation
+99.75% done with simulation
+99.8% done with simulation
+99.85% done with simulation
+99.9% done with simulation
+99.95% done with simulation
+100% done with simulation
+</pre><img vspace="5" hspace="5" src="calciumWaveSimulation_01.png" alt=""> <h2>OUTPUT<a name="8"></a></h2><p>Use the concentration record over time to automatically generate simulation output</p><pre class="codeinput">close <span class="string">all</span>
+
+<span class="keyword">if</span> any(p.outputModes==1) <span class="comment">% Calculate summary statistics</span>
+    disp(<span class="string">'Calculating simulation properties'</span>);
+    [ summaryStatistics.frequency, summaryStatistics.amplitude, summaryStatistics.width ] = analyzeWaveOutput( CaC_plot(:,p.outputStart:end), p.dx, p.dt );
+<span class="keyword">end</span>
+<span class="keyword">if</span> any(p.outputModes==2) <span class="comment">% Generate kymograph</span>
+    disp([<span class="string">'Saving kymograph: '</span> fileName]);
+    showFig(CaC_plot',[p.outputDirectory filesep fileName],p);
+<span class="keyword">end</span>
+<span class="keyword">if</span> any(p.outputModes==4) <span class="comment">% I broke this, this makes a video over time</span>
+    error(<span class="string">'THIS HAS NOT BEEN WRITTEN'</span>);
+    writeVideo(aviobj, getframe(gcf))
+    disp([<span class="string">'Saving video: '</span> fileName]);
+    close(aviobj)
+<span class="keyword">end</span>
+
+toc
+summaryStatistics.runTime = toc;
+</pre><pre class="codeoutput">Elapsed time is 76.786161 seconds.
+
+ans =
+
+     0
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Calcium wave model for Drosophila wing imaginal disc, based roughly on
+% Hofer 2002 astrocyte model
+%
+% Pavel Brodskiy, University of Notre Dame, Zartman Lab, 10.27.15
+% Hofer Paper: http://www.jneurosci.org/content/22/12/4850.full
+% Narciso Paper: http://iopscience.iop.org/article/10.1088/1478-3975/12/5/056005
+
+function [ outputFlag, summaryStatistics ] = calciumWaveSimulation (varargin)
+% INPUTS: Input each parameter which is going to be changed as two inputs:
+% first a string identifying the parameter, and then a value. Use $A or $P
+% to selectivly change parameters in the A or P compartment respectively.
+%
+% EXAMPLE: [ outputFlag, frequency, amplitude, width ] = calciumWaveSimulation2 ('v_7', 0.02);
+% EXAMPLE: [ outputFlag, frequency, amplitude, width ] = calciumWaveSimulation2 ('$Pv_7', 0.02);
+%
+% OUTPUTS: The simulation will run once, then output a frequency, amputude,
+% and a width at half height for each position in the domain. The
+% function will also save a chymograph of the simulation with a name
+% derived from the modified inputs.
+% 
+% Frequency (1/period)
+% Amplitude
+% Wave width
+% Wave speed
+
+addpath('downloadedDependencies','customDependencies');
+
+tic
+close all
+
+%% PARAMETER DECLARATION
+p1 = defaultParameters(1);
+p2 = defaultSettings();
+
+p = catstruct(p1, p2);
+
+%% INPUT PARSING
+
+% Initialize simulation description variables
+domainSizey         = p.cellNumber * p.cellSize;
+ySize               = round(domainSizey / p.dx);
+
+if p.cellRows > 1
+    domainSizex     = p.cellRows * p.cellSize;
+    xSize           = round(domainSizex / p.dx);
+    dimensions      = 2;
+else
+    xSize           = 1;
+    dimensions      = 1;
+end
+
+[ outputFlag, fileName, p ] = arginParser( p, [xSize, ySize], varargin );
+
+%% INITIALIZATION
+
+% In future version:
+% Solve for steady state, convert to modeling units if needed (uM, um, s,
+% 1e-18 moles), calculate squares of constants, initialize variables
+
+
+totalFrames         = uint32((p.totalTime / p.dt));
+framesPerOutput     = uint32(totalFrames / p.outFrames);
+frame               = 0;
+xs                  = p.dx:p.dx:domainSizey;
+
+% Initialize simulation variables
+CaC                 = ones(xSize, ySize) * p.Ca_cyto_0;
+CaER                = ones(xSize, ySize) * p.Ca_ER_0;
+IP3                 = ones(xSize, ySize) * p.IP3_0;
+IP3R                = ones(xSize, ySize) * p.IP3R_0;
+
+% Initialize output variables
+summaryStatistics.blankField = NaN;
+if any(p.outputModes==4)
+    aviobj = VideoWriter(['video ' fileName '.avi']);
+    open(aviobj);
+end
+
+if any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4)
+    if dimensions == 1
+        CaC_plot = zeros(ySize, p.kymDim);
+    elseif dimensions == 2
+        CaC_plot2D = zeros(xSize, ySize, p.outFrames);
+    else
+        disp('Simulation dimensions unknown');
+        outputFlag = 6;
+        return
+    end
+end
+
+% Initialize random pulse variables
+timeUntilPulse = exprnd(p.pulseTimeCon(0));
+IP3PulseCoords = round(p.IP3Extent / p.dx + 0.5);
+
+%% HOMOGENIZE DIFFUSIVITY
+
+Deff_Ca = 1./(1./p.D_Ca + 1./(p.P_Ca .* p.cellSize));
+Deff_IP3 = 1./(1./p.D_IP3 + 1./(p.P_IP3 .* p.cellSize));
+
+%randomNumbers = zeros(xSize, ySize);
+plotIterator = 1;
+outputTime = p.firstTime;    
+
+%meanProduction = p.v_PLC;
+theta = p.v_PLC ./ p.gammaShape;
+%v_PLC = p.v_PLC;
+
+%% SIMULATION LOOP
+    
+for t = 0:p.dt:p.totalTime
+    
+    % Implement random flashes
+    if timeUntilPulse <= 0
+        [xPulse, yPulse] = pulseCoordinates(xSize, ySize, IP3PulseCoords, p);
+        IP3(xPulse, yPulse) = IP3(xPulse, yPulse) + p.IP3Pulse;
+        timeUntilPulse = exprnd(p.pulseTimeConstant(t));
+        disp('Pulse Occured');
+    else
+        timeUntilPulse = timeUntilPulse - p.dt;
+    end
+    
+    % Bookeeping
+    outputFlag = evaluateFlags( CaC, CaER, IP3, IP3R, p.maxIP3 ) > 0;
+    if outputFlag > 0 
+        return 
+    end
+    
+    % Calculate squares for speed
+    C2          = CaC .^ 2;
+    I2          = IP3 .^ 2;
+    
+    % Calculate rates
+    v_rel   = (p.k_1 + p.k_2.*IP3R.*C2.*I2./(p.K_Ca.^2+C2)./(p.K_IP3.^2+I2)).*(CaER-CaC);
+    v_SERCA = (p.gam .* C2) ./ (p.k_gam.^2 + C2);
+    v_deg   = p.k_9.*IP3;
+    v_media    =  p.P_Ca_media .* (p.Ca_media - CaC);
+    dIP3Rdt = p.k_6.*(p.K_i.^2./(p.K_i.^2+C2)-IP3R);
+    v_PLC = gamrnd(p.gammaShape,theta, [xSize, ySize]);
+    
+    % Calculate laplacian of Ca and IP3 with no-flux boundary conditions
+    switch p.boundCondition
+        case 'per'
+            if dimensions == 1
+                dif_Ca	= Deff_Ca .* del2Periodic1D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2Periodic1D(IP3, p.dx);
+            elseif dimensions == 2
+                dif_Ca	= Deff_Ca .* del2Periodic2D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2Periodic2D(IP3, p.dx);
+            end
+        case 'noflux'
+            if dimensions == 1
+                dif_Ca	= Deff_Ca .* del2NoFlux1D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2NoFlux1D(IP3, p.dx);
+            elseif dimensions == 2
+                dif_Ca	= Deff_Ca .* del2NoFlux2D(CaC, p.dx);
+                dif_IP3	= Deff_IP3 .* del2NoFlux2D(IP3, p.dx);
+            end
+        otherwise
+            error('incorrect boundary')
+    end
+    
+    % Solve for partial from rates and laplacian
+    dCaCdt  = v_rel - v_SERCA + v_media + dif_Ca;
+    dCaERdt = p.beta .* (v_SERCA - v_rel);
+    dIP3dt  = v_PLC - v_deg + dif_IP3;
+    
+    % Update concentrations with forward euler method
+    CaC         = CaC  + dCaCdt  * p.dt;
+    CaER        = CaER + dCaERdt * p.dt;
+    IP3         = IP3  + dIP3dt  * p.dt;
+    IP3R        = IP3R + dIP3Rdt * p.dt;
+    
+    % Output the frame realtime
+    if mod(frame, framesPerOutput) == 0
+        disp([num2str(100*t/p.totalTime) '% done with simulation']);
+        if any(p.outputModes==3) % Check if realtime output is requested
+            if dimensions == 1
+                %plotOneConcentration( xs, CaC, domainSizey, p );
+                plotConcentrations( xs, CaC, CaER, IP3, IP3R, domainSizey, p )
+                drawnow
+            elseif dimensions == 2
+                imshow(CaC, p.CaBound);
+                colormap('jet');
+                drawnow
+            else
+                disp('Simulation dimensions unknown');
+                outputFlag = 6;
+                return
+            end
+        end
+        if dimensions == 2 && frame
+            CaC_plot2D(:,:,frame) = CaC;
+        end
+    end
+    
+    % Record concentration of calcium
+    frame = frame + 1;
+    if t>=outputTime&&(any(p.outputModes==1)||any(p.outputModes==2)||any(p.outputModes==4))
+        if dimensions == 1
+            CaC_plot(:,plotIterator) = CaC;
+            plotIterator = plotIterator + 1;
+            outputTime = t + p.outputInterval;
+        end
+    end
+end
+
+%% OUTPUT
+% Use the concentration record over time to automatically generate
+% simulation output
+
+close all
+
+if any(p.outputModes==1) % Calculate summary statistics
+    disp('Calculating simulation properties');
+    [ summaryStatistics.frequency, summaryStatistics.amplitude, summaryStatistics.width ] = analyzeWaveOutput( CaC_plot(:,p.outputStart:end), p.dx, p.dt );
+end
+if any(p.outputModes==2) % Generate kymograph
+    disp(['Saving kymograph: ' fileName]);
+    showFig(CaC_plot',[p.outputDirectory filesep fileName],p);
+end
+if any(p.outputModes==4) % I broke this, this makes a video over time
+    error('THIS HAS NOT BEEN WRITTEN');
+    writeVideo(aviobj, getframe(gcf))
+    disp(['Saving video: ' fileName]);
+    close(aviobj)
+end
+
+toc
+summaryStatistics.runTime = toc;
+
+
+##### SOURCE END #####
+--></body></html>
