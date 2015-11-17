@@ -4,7 +4,7 @@ clear all;
 close all;
 
 %% Parameters
-discs = [1:5, 12:17, 21, 22, 24:31];
+discs = fliplr([1:5, 12:17, 21, 22, 24:31]);
 mmm = 1;
 K=8;
     
@@ -20,14 +20,18 @@ for kkk = discs
     end
     
     %% Subtract mean image for zero-mean deviation
-    [~,~,nFrames]=size(X);
+    [h,w,nFrames]=size(X);
     Xmean=mean(X,3);
     for n=nFrames:-1:1
         Ws(:,:,n)=X(:,:,n)-Xmean;
     end
     
     %% Resize via low-pass filtering for SVD analysis
-    A=permute(Ws,[2,1,3]);
+    A=zeros(nFrames,h*w);
+    for n=1:nFrames
+        x=Ws(:,:,n);
+        A(n,:)=x(:)';
+    end
     
     [u,s,v]=svds(A,K); % s is the singular value matrix, v is the eigenmode?
     
