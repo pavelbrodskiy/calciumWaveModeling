@@ -47,7 +47,7 @@ for kkk = discs
     figure;
     for k=1:K
         subplot(2,4,k);
-        imshow(V(:,:,k),[min(V) max(V)]);
+        imshow(V(:,:,k),[min(V(:)) max(V(:))]);
         title(sprintf('k=%d',k));
     end
     
