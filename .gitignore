@@ -8,8 +8,11 @@
 #####################
 *.png
 *.tif
+<<<<<<< HEAD
 *.tiff
 *.avi
+=======
+>>>>>>> 8b8445ffd9f8a972ae73dc17006de9a3e3f4905b
 
 # Compiled source #
 ###################
@@ -47,4 +50,14 @@
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db
+Thumbs.db./.git/objects/50/041f30304a874c547ed27251e805b00339b6d5
+./.git/objects/5a/1a79f0ae4f3916f6e5916f5881b1a6c7f272f7
+./.git/objects/69/6059c564c4498afe511ab75aab6cf9b678673d
+./.git/objects/6b/d1b6fb87c8c4f1b3eb8e8e0306193019b3f762
+./.git/objects/6c/743842a79fc40b23af4305bf637218a9b9d0d5
+./.git/objects/7f/346d6a5b5c29e70a1abb93d6f209209d929425
+./.git/objects/9a/ef2e908addc30355a1e49edbadeb1d1e22aee5
+./.git/objects/b6/0f915beee63710fbd559543f29d0e1e1930cdc
+./.git/objects/e5/daf70b31bc984b314a56bbca740063b4caae58
+./.git/objects/ff/f94a52155d451d5b3fdfb3f78f5c65d5d91cd1
+./.git/objects/pack/pack-4deaeb5800ced37976b4d714edf2a013a5c0338a.pack
