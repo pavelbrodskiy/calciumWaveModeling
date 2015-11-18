@@ -1,9 +1,14 @@
 function stats = extractStatistics(signalOverTime, settings)
-% This function takes a 1D signal and extracts summary statistics.
+% This function takes a 3D signal and extracts summary statistics.
 
 if nargin < 2
     settings = settings();
 end
+
+maxProj = max(videoBin,[],3);
+minProj = mean(mean(min(videoBin,[],3)));
+signalSize = sum(sum(maxProj > 0));
+meanIntensity = squeeze(sum(sum(videoBin - minProj, 2),1)) / signalSize;
 
 [acf,lags,bounds] = autocorr(signalOverTime,360);
 [~,peakTimes,widths,amplitudes] = findpeaks(acf);

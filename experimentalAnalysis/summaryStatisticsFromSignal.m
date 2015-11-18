@@ -31,13 +31,8 @@ for i = discs
         % Analyze video bins
         statTemp = [];
         for k = 1:length(videoBins)
-            if k == 328
-                 k
-            end
-            temp2 = processBin(videoBins{k}, settings);
-            
             if temp2.flag
-                statTemp = [statTemp temp2];
+                statTemp = [statTemp extractStatistics(videoBins{k}, settings)];
             end
         end
         stats{ii,j} = statTemp;

@@ -1,4 +1,5 @@
 function matrix = processCellMatrix(cellMatrix)
+% Processes the cell matrix of structures to obtain medians of the bins.
 
 matrixSize = size(cellMatrix);
 fields = fieldnames(cellMatrix{1,1});
