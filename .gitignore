@@ -7,6 +7,9 @@
 # Simulation Output #
 #####################
 *.png
+*.tif
+*.tiff
+*.avi
 
 # Compiled source #
 ###################
