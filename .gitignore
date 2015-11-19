@@ -10,6 +10,7 @@
 *.tif
 *.tiff
 *.avi
+*.mat
 
 # Compiled source #
 ###################
