@@ -41,7 +41,6 @@ if(settings.outputBoxPlot)
     
 end
 
-
 if(settings.outputNotBoxPlot)
     close all
     notBoxPlot([AFrequency; PFrequency]',[1,1.5])
@@ -98,9 +97,6 @@ if(settings.outputScatter)
     
     print([settings.outputDirectory 'Frequency, Width, Amplitude Scatter'], '-painters', '-dpng', '-r1200')
 end
-
-
-analysis
 
 end
 

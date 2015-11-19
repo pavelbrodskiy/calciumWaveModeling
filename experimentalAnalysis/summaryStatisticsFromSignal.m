@@ -10,7 +10,11 @@ AP = {'A', 'P'};
 % Stats is a 3D matrix where i represents the wing disc number, j
 % represents the compartment, and k represents the bin within the
 % compartment.
-
+mmmm1 = 0;
+for mmmm = 1:-0.05:0
+    tic
+    settings.cutoff=mmmm;
+    mmmm1 = mmmm1 + 1;
 ii = 1;
 discsDone = 0;
 for i = discs
@@ -34,6 +38,7 @@ for i = discs
         statTemp = [];
         for k = 1:length(videoBins)
             temp2 = extractStatistics(videoBins{k}, settings);
+            %settings.outputFunction([num2str(i) ' ' num2str(j) ' ' num2str(k)]);
             if temp2.flag
                 statTemp = [statTemp temp2];
             end
@@ -44,6 +49,9 @@ for i = discs
     ii = ii + 1;
 end
 
-analysis = analyzeStats(stats, settings);
+analysis = analyzeStats(stats, settings)
 close all
 
+p(mmmm1) = analysis.pFrequency
+t(mmmm1) = toc
+end
