@@ -11,8 +11,8 @@ AP = {'A', 'P'};
 % represents the compartment, and k represents the bin within the
 % compartment.
 mmmm1 = 0; nnnn1 = 0;
-for mmmm = 0.5:-0.1:0
-    for nnnn = [5,1,2,10,25,3,50,70,1000,100]
+for mmmm = (randperm(9)./1-0.1)
+    for nnnn = [1000,5,1,2,10,25,3,50,4,70,7,100]
         nnnn1 = nnnn1 + 1;
         tic
         settings.cutoff=mmmm;
@@ -61,7 +61,18 @@ for mmmm = 0.5:-0.1:0
             t1111(mmmm1,nnnn1) = toc;
             s1111{mmmm1,nnnn1} = stats;
             n1111(mmmm1,nnnn1) = analysis.n;
-            save('dataDump',analysis.pFrequency,toc,stats,analysis.n,nnnn,mmmm,'-append')
+            cutNbin(mmmm1,nnnn1,1) = mmmm;
+            cutNbin(mmmm1,nnnn1,2) = nnnn;
+            save('dataDump',analysis.pFrequency,toc,stats,analysis.n,cutNbin,'-v7.3')
+        else
+            
+            p1111(mmmm1,nnnn1) = 1;
+            t1111(mmmm1,nnnn1) = toc;
+            s1111{mmmm1,nnnn1} = stats;
+            n1111(mmmm1,nnnn1) = 0;
+            cutNbin(mmmm1,nnnn1,1) = mmmm;
+            cutNbin(mmmm1,nnnn1,2) = nnnn;
+            save('dataDump',analysis.pFrequency,toc,stats,analysis.n,cutNbin,'-v7.3')
         end
     end
 end
