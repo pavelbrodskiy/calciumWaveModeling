@@ -19,32 +19,32 @@ peakHeights = sort(p,'descend');
 peakHeights2 = sort(p2,'descend');
 
 if length(peakHeights) > 1
-
-timeBetweenPeaks = [locs(p == peakHeights(1)) locs(p == peakHeights(1))];
-xs = 1:length(correlation);
-ys = xs*0;
-firstPeak = locs2(p2 == peakHeights2(1));
-secondPeak = firstPeak + timeBetweenPeaks(1);
-thirdPeak = firstPeak - timeBetweenPeaks(1);
-thirdPeak = max([1, thirdPeak]);
-ys([firstPeak, secondPeak, thirdPeak]) = max(meanIntensity(:));
-ys = ys(1:length(correlation));
-%plot(xs,meanIntensity,xs,ys)
-drawnow
-
+    
+    timeBetweenPeaks = [locs(p == peakHeights(1)) locs(p == peakHeights(1))];
+%     xs = 1:length(correlation);
+%     ys = xs*0;
+%     firstPeak = min(locs2(p2 == peakHeights2(1)));
+%     secondPeak = firstPeak + timeBetweenPeaks(1);
+%     thirdPeak = firstPeak - timeBetweenPeaks(1);
+%     thirdPeak = max([1, thirdPeak]);
+%     ys([firstPeak, secondPeak, thirdPeak]) = max(meanIntensity(:));
+%     ys = ys(1:length(correlation));
+%     %plot(xs,meanIntensity,xs,ys)
+%     drawnow
+    
     stats.meanFrequency = mean(1./timeBetweenPeaks);
     stats.stdevFrequency = std(1./timeBetweenPeaks);
     stats.meanAmplitude = [1 1];
     stats.stdevAmplitude = [1 1];
     stats.meanWidth = [1 1];
     stats.stdevWidth = [1 1];
-
+    
     stats.flag = true;
 else
     stats.flag = false;
 end
 
-if correlation(timeBetweenPeaks(1)) < settings.cutoff
+if exist('timeBetweenPeaks','var')&&correlation(timeBetweenPeaks(1)) < settings.cutoff
     stats.flag = false;
 end
 

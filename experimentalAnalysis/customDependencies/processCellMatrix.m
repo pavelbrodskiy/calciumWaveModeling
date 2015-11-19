@@ -8,7 +8,8 @@ if (sum(sum(~cellfun(@isempty,cellMatrix))))
 
     for i = 1:matrixSize(1)
         for j = 1:matrixSize(2)
-    matrix{i,j} = tempMat{1};
+            tempStruct = tempMat{1};
+    matrix{i,j} = tempStruct(1);
         end
     end
     
