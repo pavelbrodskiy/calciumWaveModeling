@@ -15,6 +15,6 @@ settings.outputDirectory = ['analysisOutput' filesep];
 settings.binDimension = 1055;
 
 % Ratio to divide x, y, and t dimensions by.
-settings.rescaleBy = [50,50,10]; 
+settings.rescaleBy = [1,1,1]; 
 
 end

@@ -1,54 +1,47 @@
-function stats = extractStatistics(signalOverTime, settings)
+function stats = extractStatistics(compressedVideo, settings)
 % This function takes a 3D signal and extracts summary statistics.
 
 if nargin < 2
     settings = settings();
 end
 
-maxProj = max(videoBin,[],3);
-minProj = mean(mean(min(videoBin,[],3)));
+maxProj = max(compressedVideo,[],3);
+minProj = mean(mean(min(compressedVideo,[],3)));
 signalSize = sum(sum(maxProj > 0));
-meanIntensity = squeeze(sum(sum(videoBin - minProj, 2),1)) / signalSize;
+meanIntensity = squeeze(sum(sum(compressedVideo - minProj, 2),1)) / signalSize;
 
-[acf,lags,bounds] = autocorr(signalOverTime,360);
-[~,peakTimes,widths,amplitudes] = findpeaks(acf);
+correlation = autocorr(meanIntensity,length(meanIntensity)-1);
 
-amptemp = sort(amplitudes,'descend');
-% amptemp
-% amplitudes == amptemp(2)
-% peakTimes(amplitudes == amptemp(2))
-lagInSeconds = peakTimes(amplitudes == amptemp(2));
-stats.meanFrequency = 1/lagInSeconds;
+[~,locs,~,p] = findpeaks(correlation);
+[~,locs2,~,p2] = findpeaks(meanIntensity);
 
-peakTimes = [1, 2];
+peakHeights = sort(p,'descend');
+peakHeights2 = sort(p2,'descend');
 
-% levels = statelevels(signalOverTime);
-% [Rise,LoTime,HiTime,LoLev,HiLev] = risetime(signalOverTime,settings.t);
-% [~,peakTimes,widths,amplitudes] = findpeaks(signalOverTime);
-% tempAmplitudes = sort(amplitudes, 'descend');
-% cutoff = tempAmplitudes(2) * settings.amplitudeThreshold;
-% 
-% peakTimes(amplitudes < cutoff) = [];
-% widths(amplitudes < cutoff) = [];
-% amplitudes(amplitudes < cutoff) = [];
+timeBetweenPeaks = [locs(p == peakHeights(1)) locs(p == peakHeights(1))];
+xs = 1:length(correlation);
+ys = xs*0;
+firstPeak = locs2(p2==peakHeights2(1));
+secondPeak = firstPeak + timeBetweenPeaks(1);
+thirdPeak = firstPeak - timeBetweenPeaks(1);
+thirdPeak = max([1, thirdPeak]);
+ys([firstPeak, secondPeak, thirdPeak]) = max(meanIntensity(:));
+ys = ys(1:length(correlation));
+plot(xs,meanIntensity,xs,ys)
+drawnow
+disp(num2str(timeBetweenPeaks));
 
-if length(peakTimes) > 1
-    timeBetweenPeaks = peakTimes(2:end) - peakTimes(1:end-1);
-%     stats.meanFrequency = mean(1./timeBetweenPeaks);
+if length(timeBetweenPeaks) > 1
+    stats.meanFrequency = mean(1./timeBetweenPeaks);
     stats.stdevFrequency = std(1./timeBetweenPeaks);
-    stats.meanAmplitude = mean(amplitudes);
-    stats.stdevAmplitude = std(amplitudes);
-    stats.meanWidth = mean(widths);
-    stats.stdevWidth = std(widths);
-    stats.stdevFrequency = 1;
-    stats.meanAmplitude = 1;
-    stats.stdevAmplitude = 1;
-    stats.meanWidth = 1;
-    stats.stdevWidth = 1;
+    stats.meanAmplitude = [1 1];
+    stats.stdevAmplitude = [1 1];
+    stats.meanWidth = [1 1];
+    stats.stdevWidth = [1 1];
+
     stats.flag = true;
 else
     stats.flag = false;
 end
-
 
 end
