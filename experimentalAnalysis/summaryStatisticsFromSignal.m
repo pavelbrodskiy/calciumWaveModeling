@@ -10,11 +10,14 @@ AP = {'A', 'P'};
 % Stats is a 3D matrix where i represents the wing disc number, j
 % represents the compartment, and k represents the bin within the
 % compartment.
-mmmm1 = 0;
-for mmmm = 1:-0.05:0
+mmmm1 = 0; nnnn1 = 0;
+for nnnn = [1000,5,1,2,10,25,50,70,100]
+for mmmm = -0.5:0.2:1.1
     tic
     settings.cutoff=mmmm;
+    settings.binDimension=nnnn;
     mmmm1 = mmmm1 + 1;
+    nnnn1 = nnnn1 + 1;
 ii = 1;
 discsDone = 0;
 for i = discs
@@ -52,6 +55,10 @@ end
 analysis = analyzeStats(stats, settings)
 close all
 
-p(mmmm1) = analysis.pFrequency
-t(mmmm1) = toc
+if ~isempty(analysis)
+p1111{mmmm1,nnnn1} = analysis.pFrequency
+t1111{mmmm1,nnnn1} = toc
+s1111{mmmm1,nnnn1} = stats;
+end
+end
 end

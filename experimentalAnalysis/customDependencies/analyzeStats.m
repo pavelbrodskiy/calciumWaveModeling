@@ -4,7 +4,11 @@ function analysis = analyzeStats(stats, settings)
 %% Extract statistics
 [x, ~] = size(stats);
 
+
 statData = processCellMatrix(stats);
+% a = isnan(statData);
+b = ~[statData(:,1).flag]|~[statData(:,2).flag];
+statData(b,:) = [];
 
 AFrequency = [statData(:,1).meanFrequency]./60;
 PFrequency = [statData(:,2).meanFrequency]./60;

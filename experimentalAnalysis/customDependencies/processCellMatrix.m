@@ -7,7 +7,11 @@ fields = fieldnames(cellMatrix{1,1});
 for i = 1:matrixSize(1)
     for j = 1:matrixSize(2)
         for k = 1:numel(fields)
-            matrix(i,j).(fields{k}) = median(double([cellMatrix{i, j}.(fields{k})]));
+            if cellMatrix{i, j}.flag
+                matrix(i,j).(fields{k}) = median(double([cellMatrix{i, j}.(fields{k})]));
+            else
+                matrix(i,j).flag = median(double([cellMatrix{i, j}.flag]));
+            end
         end
     end
 end
