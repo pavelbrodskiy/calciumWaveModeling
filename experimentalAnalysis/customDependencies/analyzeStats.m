@@ -4,25 +4,42 @@ function analysis = analyzeStats(stats, settings)
 %% Extract statistics
 [x, ~] = size(stats);
 
+analysis.n = 0;
 
 statData = processCellMatrix(stats);
 % a = isnan(statData);
-b = ~[statData(:,1).flag]|~[statData(:,2).flag];
-statData(b,:) = [];
+if isempty(statData)
+    analysis.pFrequency = 1;
+    analysis.pWidth = 1;
+    analysis.pAmplitude = 1;
+else
+b = cellfun(@isempty,statData)
+c = b(:,1)|b(:,2);
+statData(c,:) = [];
+end
 
-AFrequency = [statData(:,1).meanFrequency]./60;
-PFrequency = [statData(:,2).meanFrequency]./60;
-AWidth = [statData(:,1).meanWidth]*60;
-PWidth = [statData(:,2).meanWidth]*60;
-AAmplitude = [statData(:,1).meanAmplitude];
-PAmplitude = [statData(:,2).meanAmplitude];
+if isempty(statData)
+        analysis.pFrequency = 1;
+    analysis.pWidth = 1;
+    analysis.pAmplitude = 1;
+else
+    
+    statMat = cell2mat(statData);
+    
+AFrequency = [statMat(:,1).meanFrequency]./60;
+PFrequency = [statMat(:,2).meanFrequency]./60;
+AWidth = [statMat(:,1).meanWidth]*60;
+PWidth = [statMat(:,2).meanWidth]*60;
+AAmplitude = [statMat(:,1).meanAmplitude];
+PAmplitude = [statMat(:,2).meanAmplitude];
 
 [~,analysis.pFrequency,~,~] = ttest(AFrequency, PFrequency);
 [~,analysis.pWidth,~,~] = ttest(AWidth, PWidth);
 [~,analysis.pAmplitude,~,~] = ttest(AAmplitude, PAmplitude);
+[analysis.n, ~] = size(statMat);
 
 %% Output if needed
-labels = [repmat({'A Compartment'},1,x), repmat({'P Compartment'},1,x)];
+labels = [repmat({'A Compartment'},1,analysis.n), repmat({'P Compartment'},1,analysis.n)];
 
 if(settings.outputBoxPlot)
     close all
@@ -101,6 +118,6 @@ if(settings.outputScatter)
     
     print([settings.outputDirectory 'Frequency, Width, Amplitude Scatter'], '-painters', '-dpng', '-r1200')
 end
-
+end
 end
 

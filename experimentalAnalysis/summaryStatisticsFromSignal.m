@@ -12,12 +12,13 @@ AP = {'A', 'P'};
 % compartment.
 mmmm1 = 0; nnnn1 = 0;
 for nnnn = [1000,5,1,2,10,25,50,70,100]
-for mmmm = -0.5:0.2:1.1
+    nnnn1 = nnnn1 + 1;
+for mmmm = 1.1:-0.2:-0.5
     tic
     settings.cutoff=mmmm;
     settings.binDimension=nnnn;
     mmmm1 = mmmm1 + 1;
-    nnnn1 = nnnn1 + 1;
+    
 ii = 1;
 discsDone = 0;
 for i = discs
@@ -52,13 +53,14 @@ for i = discs
     ii = ii + 1;
 end
 
-analysis = analyzeStats(stats, settings)
+analysis = analyzeStats(stats, settings);
 close all
 
 if ~isempty(analysis)
-p1111{mmmm1,nnnn1} = analysis.pFrequency
-t1111{mmmm1,nnnn1} = toc
+p1111(mmmm1,nnnn1) = analysis.pFrequency
+t1111(mmmm1,nnnn1) = toc;
 s1111{mmmm1,nnnn1} = stats;
+n1111(mmmm1,nnnn1) = analysis.n;
 end
 end
 end
