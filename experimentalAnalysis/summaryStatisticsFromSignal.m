@@ -10,14 +10,16 @@ AP = {'A', 'P'};
 % Stats is a 3D matrix where i represents the wing disc number, j
 % represents the compartment, and k represents the bin within the
 % compartment.
-mmmm1 = 0; nnnn1 = 0;
-for mmmm = (randperm(9)./1-0.1)
-    for nnnn = [1000,5,1,2,10,25,3,50,4,70,7,100]
+mmmm1 = 0; 
+for mmmm = 0.37:0.001:0.45
+    mmmm1 = mmmm1 + 1;
+    nnnn1 = 0;
+    for nnnn = 4
         nnnn1 = nnnn1 + 1;
         tic
         settings.cutoff=mmmm;
         settings.binDimension=nnnn;
-        mmmm1 = mmmm1 + 1;
+        
         
         ii = 1;
         discsDone = 0;
@@ -58,12 +60,11 @@ for mmmm = (randperm(9)./1-0.1)
         
         if ~isempty(analysis)
             p1111(mmmm1,nnnn1) = analysis.pFrequency
-            t1111(mmmm1,nnnn1) = toc;
+            t1111(mmmm1,nnnn1) = toc
             s1111{mmmm1,nnnn1} = stats;
-            n1111(mmmm1,nnnn1) = analysis.n;
+            n1111(mmmm1,nnnn1) = analysis.n
             cutNbin(mmmm1,nnnn1,1) = mmmm;
             cutNbin(mmmm1,nnnn1,2) = nnnn;
-            save('dataDump',analysis.pFrequency,toc,stats,analysis.n,cutNbin,'-v7.3')
         else
             
             p1111(mmmm1,nnnn1) = 1;
@@ -72,7 +73,7 @@ for mmmm = (randperm(9)./1-0.1)
             n1111(mmmm1,nnnn1) = 0;
             cutNbin(mmmm1,nnnn1,1) = mmmm;
             cutNbin(mmmm1,nnnn1,2) = nnnn;
-            save('dataDump',analysis.pFrequency,toc,stats,analysis.n,cutNbin,'-v7.3')
         end
+        save('dataDump','p1111','t1111','s1111','n1111','cutNbin','-v7.3')
     end
 end
