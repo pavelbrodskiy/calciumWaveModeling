@@ -1,12 +1,12 @@
-function settings = settings()
+function settings = settings2()
 
 settings.amplitudeThreshold = 0.3;
 settings.t = 0:0.1666:60;
 
-settings.outputScatter = true;
-settings.outputRatioPlot = true;
-settings.outputNotBoxPlot = true;
-settings.outputBoxPlot = true;
+settings.outputScatter = false;
+settings.outputRatioPlot = false;
+settings.outputNotBoxPlot = false;
+settings.outputBoxPlot = false;
 
 % Directory to save output graphs to.
 settings.outputDirectory = ['analysisOutput' filesep];

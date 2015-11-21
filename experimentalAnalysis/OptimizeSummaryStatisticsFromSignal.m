@@ -1,8 +1,7 @@
-clear all
-close all
+function error = OptimizeSummaryStatisticsFromSignal(x)
 
 addpath('downloadedDependencies','customDependencies');
-settings = settings();
+settings = settings2();
 
 discs = [1:5, 12:17, 21, 22, 24:31];
 AP = {'A', 'P'};
@@ -10,16 +9,14 @@ AP = {'A', 'P'};
 % Stats is a 3D matrix where i represents the wing disc number, j
 % represents the compartment, and k represents the bin within the
 % compartment.
-mmmm1 = 0; 
-for mmmm = 0.41
+mmmm1 = 0; nnnn1 = 0;
+for mmmm = x(1)
     mmmm1 = mmmm1 + 1;
-    nnnn1 = 0;
-    for nnnn = 4
+    for nnnn = round(x(2))
         nnnn1 = nnnn1 + 1;
         tic
         settings.cutoff=mmmm;
         settings.binDimension=nnnn;
-        
         
         ii = 1;
         discsDone = 0;
@@ -60,11 +57,13 @@ for mmmm = 0.41
         
         if ~isempty(analysis)
             p1111(mmmm1,nnnn1) = analysis.pFrequency
-            t1111(mmmm1,nnnn1) = toc
+            t1111(mmmm1,nnnn1) = toc;
             s1111{mmmm1,nnnn1} = stats;
-            n1111(mmmm1,nnnn1) = analysis.n
+            n1111(mmmm1,nnnn1) = analysis.n;
             cutNbin(mmmm1,nnnn1,1) = mmmm;
             cutNbin(mmmm1,nnnn1,2) = nnnn;
+            
+            error = (analysis.pFrequency)^2 * log(toc) * (21 /analysis.n)^2;
         else
             
             p1111(mmmm1,nnnn1) = 1;
@@ -73,6 +72,8 @@ for mmmm = 0.41
             n1111(mmmm1,nnnn1) = 0;
             cutNbin(mmmm1,nnnn1,1) = mmmm;
             cutNbin(mmmm1,nnnn1,2) = nnnn;
+            
+            error = toc;
         end
         save('dataDump','p1111','t1111','s1111','n1111','cutNbin','-v7.3')
     end
