@@ -13,7 +13,7 @@ if isempty(statData)
     analysis.pWidth = 1;
     analysis.pAmplitude = 1;
 else
-    b = cellfun(@isempty,statData)
+    b = cellfun(@isempty,statData);
     c = b(:,1)|b(:,2);
     statData(c,:) = [];
 end
@@ -46,19 +46,19 @@ else
         boxplot([AFrequency, PFrequency], labels);
         title(['Frequency A vs P    p = ' num2str(analysis.pFrequency)])
         ylabel('Frequency (Hz)');
-        print([settings.outputDirectory 'Frequency A vs P box'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Frequency A vs P box');
         
         close all
         boxplot([AWidth, PWidth], labels);
         title(['Width A vs P    p = ' num2str(analysis.pWidth)])
         ylabel('Width (s)');
-        print([settings.outputDirectory 'Width A vs P box'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Width A vs P box');
         
         close all
         boxplot([AAmplitude, PAmplitude], labels);
         title(['Amplitude A vs P    p = ' num2str(analysis.pAmplitude)])
         ylabel('Amplitude (AU)');
-        print([settings.outputDirectory 'Amplitude A vs P box'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Amplitude A vs P box');
         
     end
     
@@ -68,21 +68,22 @@ else
         title(['Frequency A vs P    p = ' num2str(analysis.pFrequency)])
         ylabel('Frequency (Hz)');
         xlim([0.8, 1.7])
-        print([settings.outputDirectory 'Frequency A vs P'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Frequency A vs P');
         
         close all
         notBoxPlot([AWidth; PWidth]',[1,1.5])
         title(['Width A vs P    p = ' num2str(analysis.pWidth)])
         ylabel('Width (s)');
         xlim([0.8, 1.7])
-        print([settings.outputDirectory 'Width A vs P'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Width A vs P');
         
         close all
         notBoxPlot([AAmplitude; PAmplitude]',[1,1.5])
         title(['Amplitude A vs P    p = ' num2str(analysis.pAmplitude)])
         ylabel('Amplitude (AU)');
         xlim([0.8, 1.7])
-        print([settings.outputDirectory 'Amplitude A vs P'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Amplitude A vs P');
+        
     end
     
     if(settings.outputRatioPlot)
@@ -92,31 +93,45 @@ else
         title('Frequency, Width, Amplitude Ratios')
         ylabel('Ratio');
         xlim([0.8, 2.2, ])
-        print([settings.outputDirectory 'Frequency, Width, Amplitude Ratios'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Frequency, Width, Amplitude Ratios');
+        
     end
     
     if(settings.outputScatter)
         close all
         
         subplot(2,2,1)
-        scatter(AFrequency,PFrequency)
+        lastValue = max([AFrequency, PFrequency]);
+        scatter(AFrequency,PFrequency,'filled')
         title('Frequency')
         xlabel('Anterior')
         ylabel('Posterior')
+        hold on
+        plot(0:(lastValue/1000):lastValue,0:(lastValue/1000):lastValue);
+        axis([0,lastValue,0,lastValue]);
         
         subplot(2,2,2)
-        scatter(AWidth,PWidth)
+        lastValue = max([AWidth, PWidth]);
+        scatter(AWidth,PWidth,'filled')
         title('Width')
         xlabel('Anterior')
         ylabel('Posterior')
+        hold on
+        plot(0:(lastValue/1000):lastValue,0:(lastValue/1000):lastValue);
+        axis([0,lastValue,0,lastValue]);
         
         subplot(2,2,3)
-        scatter(AAmplitude,PAmplitude)
+        lastValue = max([AAmplitude, PAmplitude]);
+        scatter(AAmplitude,PAmplitude,'filled')
         title('Amplitude')
         xlabel('Anterior')
         ylabel('Posterior')
+        hold on
+        plot(0:(lastValue/1000):lastValue,0:(lastValue/1000):lastValue);
+        axis([0,lastValue,0,lastValue]);
         
-        print([settings.outputDirectory 'Frequency, Width, Amplitude Scatter'], '-painters', '-dpng', '-r1200')
+        settings.outputFunction('Frequency, Width, Amplitude Scatter');
+        
     end
 end
 end

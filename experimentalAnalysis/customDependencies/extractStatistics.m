@@ -21,16 +21,22 @@ peakHeights2 = sort(p2,'descend');
 if length(peakHeights) > 1
     
     timeBetweenPeaks = [locs(p == peakHeights(1)) locs(p == peakHeights(1))];
-%     xs = 1:length(correlation);
-%     ys = xs*0;
-%     firstPeak = min(locs2(p2 == peakHeights2(1)));
-%     secondPeak = firstPeak + timeBetweenPeaks(1);
-%     thirdPeak = firstPeak - timeBetweenPeaks(1);
-%     thirdPeak = max([1, thirdPeak]);
-%     ys([firstPeak, secondPeak, thirdPeak]) = max(meanIntensity(:));
-%     ys = ys(1:length(correlation));
-%     %plot(xs,meanIntensity,xs,ys)
-%     drawnow
+
+    if settings.outputPeaks
+        global scratchPeak
+        xs = 1:length(correlation);
+        ys = xs*0;
+        firstPeak = min(locs2(p2 == peakHeights2(1)));
+        secondPeak = firstPeak + timeBetweenPeaks(1);
+        thirdPeak = firstPeak - timeBetweenPeaks(1);
+        thirdPeak = max([1, thirdPeak]);
+        ys([firstPeak, secondPeak, thirdPeak]) = max(meanIntensity(:));
+        ys = ys(1:length(correlation));
+        plot(xs,meanIntensity,xs,ys)
+        drawnow
+        settings.outputFunction(['Peaks_' num2str(scratchPeak,'%06d')]);
+        scratchPeak = scratchPeak + 1;
+    end
     
     stats.meanFrequency = mean(1./timeBetweenPeaks);
     stats.stdevFrequency = std(1./timeBetweenPeaks);
