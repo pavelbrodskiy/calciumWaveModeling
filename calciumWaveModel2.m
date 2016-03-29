@@ -6,22 +6,28 @@
 % University of Notre Dame
 
 function calciumWaveModel
+% ALL PARAMETERS SHOULD BE IN PRODUCTS OF THE FOLLOWING UNITS:
+% time:             [s]
+% length:           [um]
+% concentration:    [uM]
+% particle number:  [1e-18 moles] = [602214 particles]
 
 close all
 
 %% Parameter declaration
 % Will use a function later to set default parameters
-v_PLC   	= 1e-2;   	% [uM/s]    Rate of PLC-gamma
-K_Ca       	= 0.2;    	% [uM]      Half-saturation constant for calcium activation of IP3R
+% Biochemical Parameters
+v_PLC   	= 0e-2;   	%1e-2;[uM/s]Rate of PLC-gamma
+K_Ca       	= 0.8;    	%0.2 [uM]	Half-saturation constant for calcium activation of IP3R
 K_IP3     	= 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
 K_i         = 0.09;    	% [uM]      Half-saturation constant for calcium inhibition of IP3R
 k_1      	= 4e-4;     % [1/s]     Rate constant of calcium leak from ER
 k_2     	= 0.08;     % [1/s]     Rate constant of calcium release through IP3
 k_SERCA   	= 0.02;     % [uM]      Half-saturation constant for SERCA pump
-v_SERCA    	= 0.08;     % [uM/s]    Maximal rate for SERCA pump
+v_SERCA    	= 0.8;     %0.08 [uM/s	Maximal rate for SERCA pump
 k_i       	= 13.3;   	% [1/s]     Rate constant of IP3R inactivation
 k_deg      	= 0.08;     % [1/s]     Rate constant of IP3 degradation     
-k_EC        = 0.035;    % [uM]      Saturation constant for calcium transfer with media
+k_EC        = 7;    %0.035 [uM]     Saturation constant for calcium transfer with media
 v_EC        = 0.51;     % [1/s]     Rate constant for calcium transfer with media
 gammaShape 	= 1;        % [  ]      Shape constant for noise term
 
@@ -33,13 +39,13 @@ P_Ca      	= 0.01;     % [uM/s]    Effective gap-junctional permeability of calc
 beta      	= 20;       %           Ratio of the effective volumes for calcium of cytoplasm and ER
 
 % Intial conditions
-Ca_0        = 12;    	% [uM]      Initial concentration of Ca2+ in cytoplasm
-CaER_0      = 3e3;     	% [uM]      Initial concentration of Ca2+ in ER
+Ca_0        = 0.05;    	% [uM]      Initial concentration of Ca2+ in cytoplasm
+CaER_0      = 80;     	% [uM]      Initial concentration of Ca2+ in ER
 IP3_0       = 0;    	% [uM]      Initial concentration of IP3
-IP3R_0      = 0;      	% [uM]      Initial active concentration of IP3R
+IP3R_0      = 1;      	% [uM]      Initial active concentration of IP3R
 
 % Domain parameters
-totalTime 	= 100;      % [s]       Total simulation time
+totalTime 	= 220;      % [s]       Total simulation time
 cellSize  	= 10;       % [um]      Size of cell
 cellNumber	= 30;       % [#]       Number of cells in sheet
 cellRows  	= 30;       % [#]       Number of cells in x direction of sheet
@@ -118,22 +124,22 @@ subplot(2,2,1)
 plot(ts, squeeze(u(100,1,:))); 
 xlabel('Time (s)')
 ylabel('[Ca^2^+] (uM)')
-axis([0,max(ts),0,15])
+axis([0,max(ts),0,max(u(100,1,:))*1.2])
 subplot(2,2,2)
 plot(ts, squeeze(u(100,2,:))); 
 xlabel('Time (s)')
 ylabel('[IP_3] (uM)')
-axis([0,max(ts),0,0.2])
+axis([0,max(ts),0,max(u(100,2,:))*1.2+1e-10])
 subplot(2,2,3)
-plot(ts, squeeze(u(100,3,:))/1000); 
+plot(ts, squeeze(u(100,3,:))); 
 xlabel('Time (s)')
 ylabel('[Ca^2^+_E_R] (mM)')
-axis([0,max(ts),0,max(u(100,3,:))*1.2/1000])
+axis([0,max(ts),0,max(u(100,3,:))*1.2])
 subplot(2,2,4)
 plot(ts, squeeze(u(100,4,:))); 
 xlabel('Time (s)')
 ylabel('IP_3R Activation (a.u.)')
-axis([0,max(ts),0,1])
+axis([0,max(ts),0,max(u(100,4,:))*1.2])
 
 function f = pdeFluxEquations(region, state, p)
 % Calculate squares of C and I to reduce computation
