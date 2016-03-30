@@ -5,7 +5,7 @@
 % Zartman Lab 
 % University of Notre Dame
 
-function calciumWaveModel
+function calciumWaveModel2
 % ALL PARAMETERS SHOULD BE IN PRODUCTS OF THE FOLLOWING UNITS:
 % time:             [s]
 % length:           [um]
@@ -17,7 +17,7 @@ close all
 %% Parameter declaration
 % Will use a function later to set default parameters
 % Biochemical Parameters
-v_PLC   	= 0e-2;   	%1e-2;[uM/s]Rate of PLC-gamma
+v_PLC   	= 1e-2;   	%1e-2;[uM/s]Rate of PLC-gamma
 K_Ca       	= 0.8;    	%0.2 [uM]	Half-saturation constant for calcium activation of IP3R
 K_IP3     	= 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
 K_i         = 0.09;    	% [uM]      Half-saturation constant for calcium inhibition of IP3R
@@ -45,7 +45,7 @@ IP3_0       = 0;    	% [uM]      Initial concentration of IP3
 IP3R_0      = 1;      	% [uM]      Initial active concentration of IP3R
 
 % Domain parameters
-totalTime 	= 220;      % [s]       Total simulation time
+totalTime 	= 50;      % [s]       Total simulation time
 cellSize  	= 10;       % [um]      Size of cell
 cellNumber	= 30;       % [#]       Number of cells in sheet
 cellRows  	= 30;       % [#]       Number of cells in x direction of sheet
@@ -145,7 +145,7 @@ function f = pdeFluxEquations(region, state, p)
 % Calculate squares of C and I to reduce computation
 C2 = state.u(1,:).^2;
 I2 = state.u(2,:).^2;
-
+state.time
 % Calculate flux terms to reduce compuatation
 J_flux = (p.k_1+p.k_2.*state.u(4,:).*C2.*I2) ...
     .*(state.u(3,:)-state.u(1,:)) ...
@@ -155,6 +155,6 @@ J_SERCA = p.v_SERCA .* C2 ./ (p.k_SERCA^2 + C2);
 
 % Solve for remaining terms
 f(1,:) = J_flux - J_SERCA + p.v_EC;
-f(2,:) = p.v_gen;  %gamrnd(p.gammaShape, p.theta);
+f(2,:) = p.v_gen;%p.v_gen;  %gamrnd(p.gammaShape, p.theta);
 f(3,:) = -p.beta*(J_flux - J_SERCA);
 f(4,:) = p.k_i*(p.K_i^2./(p.K_i^2+C2));
