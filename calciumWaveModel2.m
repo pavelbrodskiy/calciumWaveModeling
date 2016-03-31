@@ -18,18 +18,17 @@ close all
 % Will use a function later to set default parameters
 % Biochemical Parameters
 v_PLC   	= 1e-2;   	%1e-2;[uM/s]Rate of PLC-gamma
-K_Ca       	= 0.8;    	%0.2 [uM]	Half-saturation constant for calcium activation of IP3R
+K_Ca       	= 0.2;    	%0.2 [uM]	Half-saturation constant for calcium activation of IP3R
 K_IP3     	= 0.3;      % [uM]      Half-saturation constant for IP3 activation of IP3R
 K_i         = 0.09;    	% [uM]      Half-saturation constant for calcium inhibition of IP3R
 k_1      	= 4e-4;     % [1/s]     Rate constant of calcium leak from ER
 k_2     	= 0.08;     % [1/s]     Rate constant of calcium release through IP3
 k_SERCA   	= 0.02;     % [uM]      Half-saturation constant for SERCA pump
-v_SERCA    	= 0.8;     %0.08 [uM/s	Maximal rate for SERCA pump
+v_SERCA    	= 0.08;     %0.08 [uM/s	Maximal rate for SERCA pump
 k_i       	= 13.3;   	% [1/s]     Rate constant of IP3R inactivation
 k_deg      	= 0.08;     % [1/s]     Rate constant of IP3 degradation     
-k_EC        = 7;    %0.035 [uM]     Saturation constant for calcium transfer with media
+k_EC        = 0.035;    %0.035 [uM]     Saturation constant for calcium transfer with media
 v_EC        = 0.51;     % [1/s]     Rate constant for calcium transfer with media
-gammaShape 	= 1;        % [  ]      Shape constant for noise term
 
 % Physical parameters
 D_IP3     	= 280;      % [uM/s^2]  Diffusion coefficient of IP3	
@@ -45,11 +44,12 @@ IP3_0       = 0;    	% [uM]      Initial concentration of IP3
 IP3R_0      = 1;      	% [uM]      Initial active concentration of IP3R
 
 % Domain parameters
-totalTime 	= 50;      % [s]       Total simulation time
+totalTime 	= 100;      % [s]       Total simulation time
 cellSize  	= 10;       % [um]      Size of cell
 cellNumber	= 30;       % [#]       Number of cells in sheet
 cellRows  	= 30;       % [#]       Number of cells in x direction of sheet
 outputFrames= 100;
+noiseParm   = 10;
 
 % Parameters to be passed to f function
 p.k_1       = k_1;
@@ -58,14 +58,28 @@ p.K_Ca      = K_Ca;
 p.K_IP3     = K_IP3;
 p.v_SERCA   = v_SERCA;
 p.k_SERCA   = k_SERCA;
-p.v_gen     = v_PLC;
 p.beta      = beta;
 p.k_i       = k_i;
 p.K_i       = K_i;
 p.v_EC      = v_EC;
-p.gammaShape= gammaShape;
-p.theta     = v_PLC ./ gammaShape;
 
+% Random seeds for v_PLC
+% p.a_1       = rand(1,noiseParm*2)*1e-1; % Period
+% p.a_2       = rand(1,noiseParm*2) * pi .* p.a_1; % Lag
+% p.a_3       = rand(1,noiseParm*2)*0+1; % Amplitude
+% p.v_PLC     = v_PLC;
+% p.noiseParm = noiseParm;
+% for k = 1:16
+p.a_1       = rand(1,noiseParm*2)*0.2; % Period
+p.a_2       = rand(1,noiseParm*2) * 2* pi; %.* p.a_1; % Lag
+p.a_3       = rand(1,noiseParm*2)*0+1; % Amplitude
+p.v_PLC     = v_PLC;
+p.noiseParm = noiseParm;
+p.offset = 40;
+%     subplot(4,4,k)
+rateMatrix=stochasticMatrix(1:1:300, 1:1:300, p);
+p.stoch = @(region)stochasticMatrix(region.x, region.y, p);
+% end
 %% Initialization
 % Homogenize diffusivity
 Deff_Ca = 1./(1./D_Ca + 1./(P_Ca .* cellSize));
@@ -141,11 +155,12 @@ xlabel('Time (s)')
 ylabel('IP_3R Activation (a.u.)')
 axis([0,max(ts),0,max(u(100,4,:))*1.2])
 
-function f = pdeFluxEquations(region, state, p)
+function f1 = pdeFluxEquations(region, state, p)
 % Calculate squares of C and I to reduce computation
 C2 = state.u(1,:).^2;
 I2 = state.u(2,:).^2;
 state.time
+
 % Calculate flux terms to reduce compuatation
 J_flux = (p.k_1+p.k_2.*state.u(4,:).*C2.*I2) ...
     .*(state.u(3,:)-state.u(1,:)) ...
@@ -153,8 +168,29 @@ J_flux = (p.k_1+p.k_2.*state.u(4,:).*C2.*I2) ...
     ./(p.K_IP3^2+I2);
 J_SERCA = p.v_SERCA .* C2 ./ (p.k_SERCA^2 + C2);
 
+% Interpolate sin for continuous noise
+
 % Solve for remaining terms
-f(1,:) = J_flux - J_SERCA + p.v_EC;
-f(2,:) = p.v_gen;%p.v_gen;  %gamrnd(p.gammaShape, p.theta);
-f(3,:) = -p.beta*(J_flux - J_SERCA);
-f(4,:) = p.k_i*(p.K_i^2./(p.K_i^2+C2));
+f1(1,:) = J_flux - J_SERCA + p.v_EC;
+f1(2,:) = p.v_PLC * p.stoch(region);
+f1(3,:) = -p.beta*(J_flux - J_SERCA);
+f1(4,:) = p.k_i*(p.K_i^2./(p.K_i^2+C2));
+
+function stochMat = stochasticMatrix(x, y, p)
+a1s = p.a_1(1:p.noiseParm)' * x;
+a2s = repmat(p.a_2(1:p.noiseParm), [length(x),1]);
+a3s = p.a_1((p.noiseParm+1):(p.noiseParm*2))' * y;
+a4s = repmat(p.a_2((p.noiseParm+1):(p.noiseParm*2)), [length(y),1]);
+stochMat = sum(repmat(p.a_3(1:p.noiseParm),[length(y),1])'.*sin(a1s + a2s'),1) + sum(repmat(p.a_3((p.noiseParm+1):(p.noiseParm*2)),[length(y),1])'.*sin(a3s + a4s'),1);
+stochMat = stochMat + p.offset;
+
+% a1s = p.a_1(1:p.noiseParm)' * x;
+% a2s = repmat(p.a_2(1:p.noiseParm), [length(x),1]);
+% a3s = p.a_1((p.noiseParm+1):(p.noiseParm*2))' * y;
+% a4s = repmat(p.a_2((p.noiseParm+1):(p.noiseParm*2)), [length(y),1]);
+% stochMat = repmat(sum(repmat(p.a_3(1:p.noiseParm),[length(y),1])'.*sin(a1s + a2s'),1), [length(x), 1]) + repmat(sum(repmat(p.a_3((p.noiseParm+1):(p.noiseParm*2)),[length(y),1])'.*sin(a3s + a4s'),1), [length(x), 1])';
+% stochMat = stochMat + p.offset;
+
+
+
+

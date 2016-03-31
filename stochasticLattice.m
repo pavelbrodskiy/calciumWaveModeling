@@ -16,10 +16,10 @@ K_i         = 0.09;    	% [uM]      Half-saturation constant for calcium inhibit
 k_1      	= 4e-4;     % [1/s]     Rate constant of calcium leak from ER
 k_2     	= 0.08;     % [1/s]     Rate constant of calcium release through IP3
 k_SERCA   	= 0.02;     % [uM]      Half-saturation constant for SERCA pump
-v_SERCA    	= 0.8;     %0.08 [uM/s	Maximal rate for SERCA pump
+v_SERCA    	= 0.8;      %0.08 [uM/s	Maximal rate for SERCA pump
 k_i       	= 13.3;   	% [1/s]     Rate constant of IP3R inactivation
 k_deg      	= 0.08;     % [1/s]     Rate constant of IP3 degradation     
-k_EC        = 7;    %0.035 [uM]     Saturation constant for calcium transfer with media
+k_EC        = 7;        %0.035 [uM]	Saturation constant for calcium transfer with media
 v_EC        = 0.51;     % [1/s]     Rate constant for calcium transfer with media
 gammaShape 	= 1;        % [  ]      Shape constant for noise term
 
@@ -37,7 +37,7 @@ IP3_0       = 0;    	% [uM]      Initial concentration of IP3
 IP3R_0      = 1;      	% [uM]      Initial active concentration of IP3R
 
 % Domain parameters
-endTime 	= 50;      % [s]       Total simulation time
+endTime 	= 50;       % [s]       Total simulation time
 cellLength 	= 10;       % [um]      Size of cell
 outputFrames= 100;
 cellsAcross = 6;
@@ -59,7 +59,7 @@ ytemp(distances > (cellsAcross * cellLength * 1.05)) = [];
 xtemp(distances > (cellsAcross * cellLength * 1.05)) = [];
 
 clear distances
-adjacencyMatrix = logical(zeros(length(xtemp)));
+adjacencyMatrix = false(length(xtemp));
 for i = 1:length(xtemp)
     distances = sqrt((xtemp - xtemp(i)).^2 + (ytemp - ytemp(i)).^2);
     sort(distances,'descend')
